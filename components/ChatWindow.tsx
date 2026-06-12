@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ChatMessage, QueryResult, ViewMode } from "@/types";
 import ResultChart, { detectChartKind } from "./ResultChart";
@@ -159,7 +160,7 @@ function SqlViewer({ sql }: { sql: string }) {
         className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-gray-400 transition hover:text-gray-200"
       >
         <span>{open ? "Hide" : "Show"} generated SQL</span>
-        <span className="text-gray-500">{open ? "▲" : "▼"}</span>
+        {open ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
       </button>
       {open && (
         <pre className="overflow-x-auto border-t border-border px-3 py-2 text-xs text-gray-300">
