@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "QueryMind",
+  title: "Datagini",
   description: "Ask your event data anything",
 };
 

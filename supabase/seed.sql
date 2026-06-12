@@ -1,4 +1,4 @@
--- QueryMind seed script
+-- Datagini seed script
 -- Run this in the Supabase SQL editor (or via psql) to set up the schema and sample data.
 
 -- Ensure UUID generator is available

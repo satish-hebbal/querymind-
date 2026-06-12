@@ -1,7 +1,7 @@
-# QueryMind
+# Datagini
 
-QueryMind is a natural-language BI tool for an event management company. Ask
-questions in plain English about events, clients, and bookings — QueryMind
+Datagini is a natural-language BI tool for an event management company. Ask
+questions in plain English about events, clients, and bookings — Datagini
 converts them to SQL with Gemini, runs them against your Postgres database,
 and renders the results as a chart, table, or big number.
 

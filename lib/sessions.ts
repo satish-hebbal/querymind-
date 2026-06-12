@@ -1,6 +1,6 @@
 import type { ChatSession } from "@/types";
 
-const STORAGE_KEY = "querymind:sessions";
+const STORAGE_KEY = "datagini:sessions";
 const TITLE_MAX_LENGTH = 48;
 
 export function loadSessions(): ChatSession[] {

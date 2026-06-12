@@ -190,19 +190,15 @@ export default function HomePage() {
       />
 
       <main className="flex h-screen min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-border px-4 py-4 sm:px-6">
+        <header className="flex items-center border-b border-border px-4 py-3 lg:hidden">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open sidebar"
-            className="rounded-lg p-1.5 text-gray-400 transition hover:bg-white/5 hover:text-gray-200 lg:hidden"
+            className="rounded-lg p-1.5 text-gray-400 transition hover:bg-white/5 hover:text-gray-200"
           >
             <MenuIcon />
           </button>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-100">QueryMind</h1>
-            <p className="text-sm text-gray-400">Ask your event data anything</p>
-          </div>
         </header>
 
         <ChatWindow messages={messages} onExampleClick={handleSubmit} />

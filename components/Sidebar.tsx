@@ -37,7 +37,7 @@ export default function Sidebar({
         }`}
       >
         <div className="flex items-center gap-2 px-4 py-4">
-          <span className="text-lg font-semibold tracking-tight text-gray-100">QueryMind</span>
+          <span className="text-lg font-semibold tracking-tight text-gray-100">Datagini</span>
         </div>
 
         <div className="px-3">
