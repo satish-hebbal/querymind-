@@ -38,3 +38,11 @@ export interface ChatMessage {
 export type ChartKind = "line" | "bar" | "bignumber" | "table";
 
 export type ViewMode = "chart" | "table";
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: number;
+  updatedAt: number;
+}
