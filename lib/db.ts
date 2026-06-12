@@ -5,6 +5,25 @@ declare global {
   var __qmPgPool: Pool | undefined;
 }
 
+let pool: Pool | null = null;
+
+/**
+ * Lazily creates (and reuses) the Postgres connection pool. Deferring
+ * creation to first call avoids reading DATABASE_URL at module-import
+ * time, which fails during Next.js build/static analysis on Vercel.
+ */
+export function getPool(): Pool {
+  if (!pool) {
+    pool = global.__qmPgPool ?? createPool();
+
+    if (process.env.NODE_ENV !== "production") {
+      global.__qmPgPool = pool;
+    }
+  }
+
+  return pool;
+}
+
 function createPool(): Pool {
   const connectionString = process.env.DATABASE_URL;
 
@@ -18,13 +37,6 @@ function createPool(): Pool {
     max: 5,
     idleTimeoutMillis: 30000,
   });
-}
-
-// Reuse the pool across hot reloads / lambda invocations in dev.
-const pool = global.__qmPgPool ?? createPool();
-
-if (process.env.NODE_ENV !== "production") {
-  global.__qmPgPool = pool;
 }
 
 export interface QueryResult<T extends QueryResultRow = QueryResultRow> {
@@ -41,7 +53,7 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   sql: string,
   params: unknown[] = []
 ): Promise<QueryResult<T>> {
-  const client = await pool.connect();
+  const client = await getPool().connect();
 
   try {
     await client.query("SET statement_timeout = 10000");
@@ -59,5 +71,3 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
     client.release();
   }
 }
-
-export default pool;

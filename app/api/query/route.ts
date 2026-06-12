@@ -4,6 +4,8 @@ import { CANNOT_ANSWER, generateSql, generateSummary, validateSql } from "@/lib/
 import { getSchema } from "@/lib/schema";
 import type { QueryApiError, QueryApiResponse, ResultRow } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   let body: unknown;
 
