@@ -105,10 +105,12 @@ function ErrorCard({ message }: { message: ChatMessage }) {
 function ResultDisplay({ result }: { result: QueryResult }) {
   const chartKind = detectChartKind(result.columns, result.rows);
   const canChart = chartKind !== "table";
-  const [view, setView] = useState<ViewMode>(canChart ? "chart" : "table");
+  const [view, setView] = useState<ViewMode>("table");
 
   return (
     <div className="space-y-3">
+      {result.summary && <p className="text-sm text-gray-100">{result.summary}</p>}
+
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-gray-400">
           {result.rowCount} {result.rowCount === 1 ? "row" : "rows"}

@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { ResultRow } from "@/types";
 
 export const CANNOT_ANSWER = "CANNOT_ANSWER";
 
@@ -110,4 +111,35 @@ export async function generateSql(schema: string, question: string): Promise<str
   const text = result.response.text();
 
   return cleanSqlResponse(text);
+}
+
+/**
+ * Generates a single plain-language sentence answering the question from
+ * the query results, so the user gets a direct answer alongside the table/chart.
+ */
+export async function generateSummary(
+  question: string,
+  columns: string[],
+  rows: ResultRow[],
+  rowCount: number
+): Promise<string> {
+  const client = getClient();
+  const model = client.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+  const sample = rows.slice(0, 10);
+  const prompt = `You are a data analyst for an event management company.
+Question: ${question}
+Result columns: ${columns.join(", ")}
+Total rows: ${rowCount}
+Result data (JSON, up to 10 rows shown): ${JSON.stringify(sample)}
+
+Write exactly one short, plain-language sentence that directly answers the question using this data.
+No markdown, no preamble, no column names unless natural. If there is no data, say so plainly.`;
+
+  const result = await model.generateContent({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { maxOutputTokens: 100, temperature: 0.2 },
+  });
+
+  return result.response.text().trim();
 }

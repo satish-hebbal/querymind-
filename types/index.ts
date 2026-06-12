@@ -7,6 +7,7 @@ export interface QueryResult {
   columns: string[];
   rows: ResultRow[];
   rowCount: number;
+  summary?: string;
 }
 
 export interface QueryApiResponse {
@@ -14,6 +15,7 @@ export interface QueryApiResponse {
   columns: string[];
   rows: ResultRow[];
   rowCount: number;
+  summary?: string;
   error?: undefined;
 }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
-import { CANNOT_ANSWER, generateSql, validateSql } from "@/lib/gemini";
+import { CANNOT_ANSWER, generateSql, generateSummary, validateSql } from "@/lib/gemini";
 import { getSchema } from "@/lib/schema";
 import type { QueryApiError, QueryApiResponse, ResultRow } from "@/types";
 
@@ -45,11 +45,19 @@ export async function POST(req: NextRequest) {
 
     const result = await query<ResultRow>(sql);
 
+    let summary: string | undefined;
+    try {
+      summary = await generateSummary(question, result.columns, result.rows, result.rowCount);
+    } catch (error) {
+      console.error("Summary generation error:", error);
+    }
+
     return NextResponse.json<QueryApiResponse>({
       sql,
       columns: result.columns,
       rows: result.rows,
       rowCount: result.rowCount,
+      summary,
     });
   } catch (error) {
     console.error("Query API error:", error);

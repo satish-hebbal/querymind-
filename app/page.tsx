@@ -143,6 +143,7 @@ export default function HomePage() {
                     columns: data.columns,
                     rows: data.rows,
                     rowCount: data.rowCount,
+                    summary: data.summary,
                   },
                 };
               }),
