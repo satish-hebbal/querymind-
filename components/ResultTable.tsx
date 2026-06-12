@@ -16,7 +16,7 @@ export default function ResultTable({ result }: ResultTableProps) {
 
   if (rows.length === 0 || columns.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface px-4 py-6 text-center text-sm text-gray-400">
+      <div className="rounded-lg border border-border bg-surface px-4 py-6 text-center text-sm text-ink-secondary">
         Query returned no rows.
       </div>
     );
@@ -25,12 +25,12 @@ export default function ResultTable({ result }: ResultTableProps) {
   return (
     <div className="max-h-96 w-full overflow-auto rounded-lg border border-border">
       <table className="w-full min-w-full text-left text-sm">
-        <thead className="sticky top-0 bg-surface">
+        <thead className="sticky top-0 bg-elevated">
           <tr>
             {columns.map((column) => (
               <th
                 key={column}
-                className="whitespace-nowrap border-b border-border px-3 py-2 font-medium text-gray-300"
+                className="whitespace-nowrap border-b border-border px-3 py-2 font-medium text-ink-secondary"
               >
                 {column}
               </th>
@@ -39,9 +39,9 @@ export default function ResultTable({ result }: ResultTableProps) {
         </thead>
         <tbody>
           {rows.map((row, rowIndex) => (
-            <tr key={rowIndex} className="border-b border-border/60 last:border-b-0 hover:bg-white/5">
+            <tr key={rowIndex} className="border-b border-border/60 transition-colors duration-150 last:border-b-0 hover:bg-elevated/50">
               {columns.map((column) => (
-                <td key={column} className="whitespace-nowrap px-3 py-2 text-gray-200">
+                <td key={column} className="whitespace-nowrap px-3 py-2 text-ink">
                   {formatCell(row[column])}
                 </td>
               ))}

@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  LabelList,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -13,7 +14,38 @@ import {
 } from "recharts";
 import type { CellValue, ChartKind, QueryResult, ResultRow } from "@/types";
 
-const ACCENT = "#6366f1";
+const ACCENT = "#a8a29e";
+const GRID_COLOR = "rgba(168, 162, 158, 0.15)";
+const AXIS_COLOR = "#78716c";
+const TOOLTIP_BG = "#1c1917";
+const TOOLTIP_BORDER = "#44403c";
+const TOOLTIP_TEXT = "#fafaf9";
+const TOOLTIP_ITEM = "#d6d3d1";
+
+const MAX_BARS = 10;
+
+function truncateLabel(value: string, max = 14): string {
+  return value.length > max ? `${value.slice(0, max - 1)}…` : value;
+}
+
+function formatValueLabel(value: number): string {
+  return value.toLocaleString("en-IN");
+}
+
+interface CategoryTickProps {
+  x?: number;
+  y?: number;
+  payload?: { value?: string | number };
+}
+
+function CategoryTick({ x = 0, y = 0, payload }: CategoryTickProps) {
+  const label = truncateLabel(String(payload?.value ?? ""));
+  return (
+    <text x={x} y={y} dy={4} textAnchor="end" fill={AXIS_COLOR} fontSize={12}>
+      {label}
+    </text>
+  );
+}
 
 function isNumericValue(value: CellValue): boolean {
   if (typeof value === "number") return true;
@@ -102,9 +134,9 @@ export default function ResultChart({ result }: ResultChartProps) {
     const value = rows[0]?.[column];
 
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface px-6 py-10 text-center">
-        <span className="text-4xl font-bold text-accent sm:text-5xl">{formatBigNumber(value)}</span>
-        <span className="text-sm text-gray-400">{column}</span>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface px-6 py-10 text-center shadow-glow-sm">
+        <span className="text-4xl font-bold text-ink sm:text-5xl">{formatBigNumber(value)}</span>
+        <span className="text-sm text-ink-secondary">{column}</span>
       </div>
     );
   }
@@ -124,13 +156,13 @@ export default function ResultChart({ result }: ResultChartProps) {
       <div className="h-72 w-full rounded-lg border border-border bg-surface p-4">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
-            <XAxis dataKey="label" stroke="#9ca3af" fontSize={12} tickMargin={8} />
-            <YAxis stroke="#9ca3af" fontSize={12} width={64} />
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
+            <XAxis dataKey="label" stroke={AXIS_COLOR} fontSize={12} tickMargin={8} />
+            <YAxis stroke={AXIS_COLOR} fontSize={12} width={64} />
             <Tooltip
-              contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8 }}
-              labelStyle={{ color: "#e5e7eb" }}
-              itemStyle={{ color: "#e5e7eb" }}
+              contentStyle={{ backgroundColor: TOOLTIP_BG, border: `1px solid ${TOOLTIP_BORDER}`, borderRadius: 8 }}
+              labelStyle={{ color: TOOLTIP_TEXT }}
+              itemStyle={{ color: TOOLTIP_ITEM }}
             />
             <Line type="monotone" dataKey="value" name={valueColumn} stroke={ACCENT} strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
@@ -143,41 +175,53 @@ export default function ResultChart({ result }: ResultChartProps) {
     const textColumn = columns.find((column) => !numericColumns.includes(column)) as string;
     const valueColumn = numericColumns[0];
 
-    const data = rows.map((row) => ({
+    const allData = rows.map((row) => ({
       label: String(row[textColumn] ?? ""),
       value: toNumber(row[valueColumn]),
     }));
 
+    const data = allData.slice(0, MAX_BARS);
+    const longestLabel = data.reduce((max, item) => Math.max(max, truncateLabel(item.label).length), 0);
+    const axisWidth = Math.min(140, Math.max(70, longestLabel * 7 + 24));
+    const chartHeight = Math.max(180, data.length * 42 + 24);
+
     return (
-      <div className="h-72 w-full rounded-lg border border-border bg-surface p-4">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
-            <XAxis
-              dataKey="label"
-              stroke="#9ca3af"
-              fontSize={11}
-              tickMargin={8}
-              interval={0}
-              angle={-25}
-              textAnchor="end"
-              height={70}
-            />
-            <YAxis stroke="#9ca3af" fontSize={12} width={64} />
-            <Tooltip
-              contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8 }}
-              labelStyle={{ color: "#e5e7eb" }}
-              itemStyle={{ color: "#e5e7eb" }}
-            />
-            <Bar dataKey="value" name={valueColumn} fill={ACCENT} radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="w-full overflow-x-auto rounded-lg border border-border bg-surface p-4">
+        <div className="min-w-[280px]" style={{ height: chartHeight }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} layout="vertical" margin={{ top: 4, right: 36, bottom: 4, left: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} horizontal={false} />
+              <XAxis type="number" stroke={AXIS_COLOR} fontSize={12} />
+              <YAxis
+                type="category"
+                dataKey="label"
+                stroke={AXIS_COLOR}
+                fontSize={12}
+                width={axisWidth}
+                tick={<CategoryTick />}
+              />
+              <Tooltip
+                contentStyle={{ backgroundColor: TOOLTIP_BG, border: `1px solid ${TOOLTIP_BORDER}`, borderRadius: 8 }}
+                labelStyle={{ color: TOOLTIP_TEXT }}
+                itemStyle={{ color: TOOLTIP_ITEM }}
+              />
+              <Bar dataKey="value" name={valueColumn} fill={ACCENT} radius={[0, 4, 4, 0]} maxBarSize={28}>
+                <LabelList dataKey="value" position="right" fill={AXIS_COLOR} fontSize={11} formatter={formatValueLabel} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        {allData.length > MAX_BARS && (
+          <p className="mt-2 text-center text-xs text-ink-dim">
+            Showing top {MAX_BARS} of {allData.length} rows
+          </p>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface px-4 py-6 text-center text-sm text-gray-400">
+    <div className="rounded-lg border border-border bg-surface px-4 py-6 text-center text-sm text-ink-secondary">
       No chart available for this result.
     </div>
   );

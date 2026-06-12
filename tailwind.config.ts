@@ -8,13 +8,36 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#0f0f0f",
-        surface: "#1a1a1a",
-        border: "#2a2a2a",
-        accent: "#6366f1",
+        bg: "rgb(var(--bg-base) / <alpha-value>)",
+        surface: "rgb(var(--bg-surface) / <alpha-value>)",
+        card: "rgb(var(--bg-card) / <alpha-value>)",
+        elevated: "rgb(var(--bg-elevated) / <alpha-value>)",
+        border: "rgb(var(--border) / <alpha-value>)",
+        "border-bright": "rgb(var(--border-bright) / <alpha-value>)",
+        accent: "rgb(var(--accent-green) / <alpha-value>)",
+        "accent-glow": "rgb(var(--accent-glow) / <alpha-value>)",
+        "accent-dim": "rgb(var(--accent-dim) / <alpha-value>)",
+        "accent-muted": "rgb(var(--accent-muted) / <alpha-value>)",
+        ink: "rgb(var(--text-primary) / <alpha-value>)",
+        "ink-secondary": "rgb(var(--text-secondary) / <alpha-value>)",
+        "ink-tertiary": "rgb(var(--text-tertiary) / <alpha-value>)",
+        "ink-dim": "rgb(var(--text-dim) / <alpha-value>)",
+        success: "#22c55e",
+        error: "#ef4444",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],
+        mono: ["var(--font-jetbrains-mono)", "monospace"],
+      },
+      boxShadow: {
+        "glow-sm": "0 0 12px rgba(120, 113, 108, 0.15)",
+        "glow-md": "0 0 24px rgba(120, 113, 108, 0.2)",
+        "glow-lg": "0 0 48px rgba(120, 113, 108, 0.12)",
+        "accent-inset":
+          "inset 0 -8px 12px 0 rgba(20, 83, 45, 0.85), inset 0 2px 8px 0 rgba(187, 247, 208, 0.85), inset 2px 0 8px 0 rgba(187, 247, 208, 0.85), inset -2px 0 8px 0 rgba(187, 247, 208, 0.85)",
+      },
+      borderRadius: {
+        xl: "12px",
       },
     },
   },

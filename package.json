@@ -9,15 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
     "@google/generative-ai": "^0.21.0",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.1",
+    "@xyflow/react": "^12.11.0",
+    "dagre": "^0.8.5",
     "lucide-react": "^1.17.0",
     "next": "14.2.35",
+    "openai": "^6.42.0",
     "pg": "^8.13.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.13.3"
   },
   "devDependencies": {
+    "@types/dagre": "^0.7.54",
     "@types/node": "^20.17.9",
     "@types/pg": "^8.11.10",
     "@types/react": "^18.3.12",
