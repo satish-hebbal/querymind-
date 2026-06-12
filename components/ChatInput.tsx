@@ -1,5 +1,6 @@
 "use client";
 
+import { Send } from "lucide-react";
 import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
 interface ChatInputProps {
@@ -61,30 +62,12 @@ export default function ChatInput({ onSubmit, disabled }: ChatInputProps) {
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Send message"
         >
-          <SendIcon />
+          <Send className="h-5 w-5" />
         </button>
       </div>
       <p className="mx-auto mt-2 max-w-3xl text-center text-xs text-gray-500">
         Enter to send · Shift+Enter for a new line
       </p>
     </form>
-  );
-}
-
-function SendIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-5 w-5"
-    >
-      <path d="M22 2 11 13" />
-      <path d="M22 2 15 22 11 13 2 9 22 2Z" />
-    </svg>
   );
 }

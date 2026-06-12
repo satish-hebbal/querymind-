@@ -1,5 +1,6 @@
 "use client";
 
+import { Menu } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import ChatInput from "@/components/ChatInput";
 import ChatWindow from "@/components/ChatWindow";
@@ -15,6 +16,7 @@ export default function HomePage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -183,10 +185,12 @@ export default function HomePage() {
         sessions={sortedSessions}
         activeSessionId={activeSessionId}
         open={sidebarOpen}
+        collapsed={sidebarCollapsed}
         onSelectSession={handleSelectSession}
         onNewChat={handleNewChat}
         onDeleteSession={handleDeleteSession}
         onClose={() => setSidebarOpen(false)}
+        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
       />
 
       <main className="flex h-screen min-w-0 flex-1 flex-col">
@@ -197,7 +201,7 @@ export default function HomePage() {
             aria-label="Open sidebar"
             className="rounded-lg p-1.5 text-gray-400 transition hover:bg-white/5 hover:text-gray-200"
           >
-            <MenuIcon />
+            <Menu className="h-5 w-5" />
           </button>
         </header>
 
@@ -206,22 +210,5 @@ export default function HomePage() {
         <ChatInput onSubmit={handleSubmit} disabled={isLoading} />
       </main>
     </div>
-  );
-}
-
-function MenuIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-5 w-5"
-    >
-      <path d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
   );
 }
