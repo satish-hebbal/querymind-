@@ -1,8 +1,10 @@
 "use client";
 
 import { Send } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useGini } from "@/lib/gini-context";
+import { AI_PROVIDER_ICONS, AI_PROVIDER_LABELS, DB_TYPE_ICONS, DB_TYPE_LABELS } from "@/lib/provider-meta";
 
 const TYPING_IDLE_MS = 600;
 
@@ -16,7 +18,7 @@ export default function ChatInput({ onSubmit, disabled, prefill }: ChatInputProp
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { setIsTyping } = useGini();
+  const { setIsTyping, projectId, dbType, aiProvider } = useGini();
 
   useEffect(() => {
     return () => {
@@ -79,6 +81,24 @@ export default function ChatInput({ onSubmit, disabled, prefill }: ChatInputProp
 
   return (
     <form onSubmit={handleFormSubmit} className="border-t border-border bg-bg px-4 py-3 sm:px-6">
+      <div className="mx-auto mb-2 flex max-w-3xl items-center justify-between text-[11px] text-ink-dim">
+        <Link
+          href={`/project/${projectId}/config?tab=database`}
+          className="flex items-center gap-1.5 transition-colors duration-150 hover:text-ink-secondary"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={DB_TYPE_ICONS[dbType]} alt="" className="h-3.5 w-3.5" />
+          {DB_TYPE_LABELS[dbType]}
+        </Link>
+        <Link
+          href={`/project/${projectId}/config?tab=ai`}
+          className="flex items-center gap-1.5 transition-colors duration-150 hover:text-ink-secondary"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={AI_PROVIDER_ICONS[aiProvider]} alt="" className="h-3.5 w-3.5" />
+          {AI_PROVIDER_LABELS[aiProvider]}
+        </Link>
+      </div>
       <div className="mx-auto flex max-w-3xl items-end gap-2">
         <textarea
           ref={textareaRef}

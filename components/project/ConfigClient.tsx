@@ -3,58 +3,42 @@
 import {
   AlertTriangle,
   Check,
+  Copy,
   Database,
   ExternalLink,
   Eye,
   EyeOff,
   Loader2,
-  LogIn,
   MessageSquare,
   Settings as SettingsIcon,
+  ShieldCheck,
   Sparkles,
   Trash2,
   Workflow,
   type LucideIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import type { AiProvider, DbType, ProjectConfig } from "@/types";
-
-const DB_TYPE_LABELS: Record<DbType, string> = {
-  postgresql: "PostgreSQL",
-  mysql: "MySQL",
-  sqlite: "SQLite",
-};
-
-const DB_TYPE_ICONS: Record<DbType, string> = {
-  postgresql: "/db-icons/postgresql-icon.svg",
-  mysql: "/db-icons/mysql-icon.svg",
-  sqlite: "/db-icons/sqlite-icon.svg",
-};
-
-const AI_PROVIDER_ICONS: Record<AiProvider, string> = {
-  gemini: "/model-icons/gemini-icon.svg",
-  openai: "/model-icons/openai-icon.svg",
-  claude: "/model-icons/claude-icon.svg",
-};
+import { useEffect, useState } from "react";
+import { AI_PROVIDER_ICONS, AI_PROVIDER_LABELS, DB_TYPE_ICONS, DB_TYPE_LABELS } from "@/lib/provider-meta";
+import type { AiProvider, ProjectConfig } from "@/types";
 
 const AI_PROVIDER_INFO: Record<AiProvider, { label: string; note: string; keyUrl: string; keyUrlLabel: string; requiresKey: boolean }> = {
   gemini: {
-    label: "Gemini",
+    label: AI_PROVIDER_LABELS.gemini,
     note: "Uses Google's Gemini 2.5 Flash model. A shared free-tier key is used by default — add your own key for higher rate limits.",
     keyUrl: "https://aistudio.google.com/app/apikey",
     keyUrlLabel: "Get a Gemini API key",
     requiresKey: false,
   },
   openai: {
-    label: "GPT-4o",
+    label: AI_PROVIDER_LABELS.openai,
     note: "Uses OpenAI's GPT-4o model. Requires your own OpenAI API key.",
     keyUrl: "https://platform.openai.com/api-keys",
     keyUrlLabel: "Get an OpenAI API key",
     requiresKey: true,
   },
   claude: {
-    label: "Claude",
+    label: AI_PROVIDER_LABELS.claude,
     note: "Uses Anthropic's Claude 3.5 Haiku model. Requires your own Anthropic API key.",
     keyUrl: "https://console.anthropic.com/settings/keys",
     keyUrlLabel: "Get an Anthropic API key",
@@ -83,11 +67,6 @@ const GUIDE_STEPS: { title: string; body: string; icon: LucideIcon }[] = [
     body: 'Head to the Chat tab and ask things like "How many rows are in each table?" or "Show me the most recent 10 records in [table]". Datagini converts your question into SQL, runs it safely (read-only), and summarizes the results.',
     icon: MessageSquare,
   },
-  {
-    title: "5. (Optional) Enable Google sign-in",
-    body: "In your Supabase project dashboard, go to Authentication → Providers → Google, add your OAuth client ID and secret, and set the redirect URL to /auth/callback. Users can then sign in with Google from the login page.",
-    icon: LogIn,
-  },
 ];
 
 type Tab = "database" | "ai" | "guide";
@@ -107,6 +86,13 @@ interface ConfigClientProps {
 
 export default function ConfigClient({ projectId, config }: ConfigClientProps) {
   const [tab, setTab] = useState<Tab>("database");
+
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("tab");
+    if (requested === "database" || requested === "ai" || requested === "guide") {
+      setTab(requested);
+    }
+  }, []);
 
   return (
     <div className="page-fade h-full overflow-y-auto">
@@ -154,7 +140,6 @@ type AsyncState = "idle" | "saving" | "success" | "error";
 
 function DatabaseTab({ projectId, config }: { projectId: string; config: ProjectConfig }) {
   const router = useRouter();
-  const [dbType, setDbType] = useState<DbType>(config.db_type);
   const [dbUrlInput, setDbUrlInput] = useState("");
   const [testState, setTestState] = useState<"idle" | "testing" | "success" | "error">("idle");
   const [testError, setTestError] = useState<string | null>(null);
@@ -193,8 +178,14 @@ function DatabaseTab({ projectId, config }: { projectId: string; config: Project
     setSaveState("saving");
     setSaveError(null);
 
-    const body: Record<string, unknown> = { dbType };
+    const body: Record<string, unknown> = {};
     if (dbUrlInput.trim()) body.dbUrl = dbUrlInput.trim();
+
+    if (Object.keys(body).length === 0) {
+      setSaveState("error");
+      setSaveError("Enter a new connection URL to save.");
+      return;
+    }
 
     try {
       const response = await fetch(`/api/projects/${projectId}`, {
@@ -250,7 +241,8 @@ function DatabaseTab({ projectId, config }: { projectId: string; config: Project
       <section className="rounded-2xl border border-border bg-card p-5 transition-colors duration-200">
         <h2 className="mb-1 text-sm font-semibold text-ink">Connection</h2>
         <p className="mb-4 text-xs text-ink-dim">
-          Your database connection string is encrypted at rest and never shown in full.
+          Your database connection string is encrypted at rest and never shown in full. Every query Datagini
+          runs is wrapped in a read-only transaction and limited to a single SELECT statement.
         </p>
 
         <div className="mb-4">
@@ -279,15 +271,14 @@ function DatabaseTab({ projectId, config }: { projectId: string; config: Project
 
         <div className="mb-4">
           <label className="mb-1 block text-xs font-medium text-ink-secondary">Database type</label>
-          <div className="grid grid-cols-3 gap-2">
-            {(["postgresql", "mysql", "sqlite"] as DbType[]).map((type) => (
-              <button key={type} type="button" onClick={() => setDbType(type)} className={selectorButtonClass(dbType === type)}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={DB_TYPE_ICONS[type]} alt="" className="h-4 w-4 shrink-0" />
-                {DB_TYPE_LABELS[type]}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 rounded-lg border border-border-bright bg-elevated px-3 py-2 text-sm text-ink shadow-glow-sm">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={DB_TYPE_ICONS.postgresql} alt="" className="h-4 w-4 shrink-0" />
+            {DB_TYPE_LABELS.postgresql}
           </div>
+          <p className="mt-1.5 text-xs text-ink-dim">
+            Datagini currently supports PostgreSQL and Postgres-compatible databases. More engines are on the roadmap.
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -317,6 +308,8 @@ function DatabaseTab({ projectId, config }: { projectId: string; config: Project
         {saveState === "success" && <p className="mt-2 text-xs text-success">Saved.</p>}
         {saveState === "error" && <p className="mt-2 text-xs text-error">{saveError}</p>}
       </section>
+
+      <ReadOnlyRoleHelper />
 
       <section className="rounded-2xl border border-error/30 bg-card p-5 transition-colors duration-200">
         <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold text-error">
@@ -352,6 +345,62 @@ function DatabaseTab({ projectId, config }: { projectId: string; config: Project
         </button>
       </section>
     </div>
+  );
+}
+
+const READONLY_ROLE_SQL = `CREATE ROLE datagini_readonly WITH LOGIN PASSWORD 'choose-a-strong-password';
+GRANT CONNECT ON DATABASE your_database TO datagini_readonly;
+GRANT USAGE ON SCHEMA public TO datagini_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO datagini_readonly;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO datagini_readonly;`;
+
+function ReadOnlyRoleHelper() {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(READONLY_ROLE_SQL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard access denied — ignore, the snippet is still selectable.
+    }
+  }
+
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 transition-colors duration-200">
+      <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold text-ink">
+        <ShieldCheck size={16} strokeWidth={1.5} className="text-accent" />
+        Use a read-only database user (recommended)
+      </h2>
+      <p className="mb-3 text-xs text-ink-dim">
+        Datagini only ever issues a single SELECT statement per query, inside a read-only transaction. For
+        the strongest guarantee, don&apos;t connect with your main database credentials at all — create a
+        dedicated user that can only read, then use that connection string above. Run this once in your
+        database (e.g. the SQL editor in Supabase or Neon, or via psql), replacing the placeholders:
+      </p>
+
+      <div className="relative">
+        <pre className="overflow-x-auto rounded-lg border border-border bg-surface px-3 py-2.5 pr-16 font-mono text-[11px] leading-relaxed text-ink-secondary">
+          {READONLY_ROLE_SQL}
+        </pre>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="absolute right-2 top-2 flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[11px] text-ink-secondary transition-all duration-150 hover:border-border-bright hover:text-ink active:scale-[0.97]"
+        >
+          {copied ? <Check size={12} strokeWidth={1.5} /> : <Copy size={12} strokeWidth={1.5} />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+
+      <p className="mt-3 text-xs text-ink-dim">
+        Then update your connection URL above to use{" "}
+        <code className="rounded bg-surface px-1 py-0.5 text-[11px] text-ink-secondary">datagini_readonly</code> and its
+        password instead of your admin user. This way, even if a query were ever crafted to attempt a write, the
+        database itself — not just Datagini — would refuse it.
+      </p>
+    </section>
   );
 }
 
@@ -417,6 +466,12 @@ function AiModelTab({ projectId, config }: { projectId: string; config: ProjectC
       <section className="rounded-2xl border border-border bg-card p-5 transition-colors duration-200">
         <h2 className="mb-1 text-sm font-semibold text-ink">AI Provider</h2>
         <p className="mb-4 text-xs text-ink-dim">Choose which model generates SQL and summaries for this project.</p>
+
+        <p className="mb-4 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-ink-dim">
+          When you ask a question, your database schema (table and column names) and the resulting query
+          results are sent to the provider below to generate SQL and a plain-English summary. If you use your
+          own API key, that data is sent under your account&apos;s agreement with that provider.
+        </p>
 
         <div className="mb-4 grid grid-cols-3 gap-2">
           {(["gemini", "openai", "claude"] as AiProvider[]).map((provider) => (

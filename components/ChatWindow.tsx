@@ -1,9 +1,10 @@
 "use client";
 
-import { AlertTriangle, ChevronDown, ChevronUp, Info, Sparkles } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, Info } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ChatMessage, QueryResult, ViewMode } from "@/types";
 import GiniMascot from "./GiniMascot";
+import GiniOnDb from "./GiniOnDb";
 import ResultChart, { detectChartKind } from "./ResultChart";
 import ResultTable from "./ResultTable";
 
@@ -63,9 +64,7 @@ export default function ChatWindow({ messages, onExampleClick }: ChatWindowProps
   if (messages.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-elevated text-ink-secondary">
-          <Sparkles size={22} strokeWidth={1.5} />
-        </div>
+        <GiniOnDb className="h-32 w-auto" />
         <div>
           <h2 className="text-xl font-semibold text-ink">Ask anything about your database</h2>
           <p className="mt-1 text-sm text-ink-secondary">Try one of these to get started</p>

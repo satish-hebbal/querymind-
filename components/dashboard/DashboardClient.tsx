@@ -206,7 +206,6 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dbUrl, setDbUrl] = useState("");
-  const [dbType, setDbType] = useState<DbType>("postgresql");
   const [aiProvider, setAiProvider] = useState<AiProvider>("gemini");
   const [aiApiKey, setAiApiKey] = useState("");
   const [testState, setTestState] = useState<"idle" | "testing" | "success" | "error">("idle");
@@ -274,7 +273,6 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
           name: name.trim(),
           description: description.trim(),
           dbUrl: dbUrl.trim(),
-          dbType,
           aiProvider,
           aiApiKey: aiApiKey.trim(),
         }),
@@ -373,22 +371,14 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
 
           <div>
             <label className="mb-1 block text-xs font-medium text-ink-secondary">Database type</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["postgresql", "mysql", "sqlite"] as DbType[]).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setDbType(type)}
-                  className={`rounded-lg border px-3 py-2 text-sm transition-all duration-150 active:scale-[0.97] ${
-                    dbType === type
-                      ? "border-border-bright bg-elevated text-ink shadow-glow-sm"
-                      : "border-border text-ink-secondary hover:border-border-bright"
-                  }`}
-                >
-                  {DB_TYPE_LABELS[type]}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 rounded-lg border border-border-bright bg-elevated px-3 py-2 text-sm text-ink shadow-glow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/db-icons/postgresql-icon.svg" alt="" className="h-4 w-4 shrink-0" />
+              PostgreSQL
             </div>
+            <p className="mt-1.5 text-xs text-ink-dim">
+              Datagini currently supports PostgreSQL and Postgres-compatible databases (Supabase, Neon, Railway, Render, etc.). More engines are on the roadmap.
+            </p>
           </div>
 
           <div>

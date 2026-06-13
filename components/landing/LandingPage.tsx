@@ -2,6 +2,7 @@ import { ArrowRight, MessageSquare, Sparkles, Workflow } from "lucide-react";
 import localFont from "next/font/local";
 import Link from "next/link";
 import GiniMascot from "@/components/GiniMascot";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const bitcount = localFont({
   src: "../../public/font/BitcountSingle-VariableFont_CRSV,ELSH,ELXP,slnt,wght.ttf",
@@ -31,20 +32,21 @@ export default function LandingPage() {
     <div className="flex min-h-screen flex-col bg-bg">
       <header className="border-b border-border">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2 text-lg font-semibold text-white">
+          <div className="flex items-center gap-2 text-lg font-semibold text-ink">
             <GiniMascot size={28} />
             Datagini
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Link
               href="/auth/login"
-              className="text-sm font-medium text-gray-300 transition hover:text-white"
+              className="text-sm font-medium text-ink-secondary transition hover:text-ink"
             >
               Sign in
             </Link>
             <Link
               href="/auth/login?mode=signup"
-              className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-white transition hover:border-gray-500"
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink transition hover:border-border-bright"
             >
               Get started
             </Link>
@@ -53,17 +55,17 @@ export default function LandingPage() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
-        <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-gray-400">
+        <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-ink-tertiary">
           AI-powered database exploration
         </span>
 
-        <h1 className={`${bitcount.className} mt-6 max-w-3xl text-4xl font-normal tracking-tight text-white sm:text-5xl`}>
+        <h1 className={`${bitcount.className} mt-6 max-w-3xl text-4xl font-normal tracking-tight text-ink sm:text-5xl`}>
           Talk to your database.
           <br />
-          <span className="text-gray-400">Get answers instantly.</span>
+          <span className="text-ink-tertiary">Get answers instantly.</span>
         </h1>
 
-        <p className="mt-4 max-w-xl text-base text-gray-400 sm:text-lg">
+        <p className="mt-4 max-w-xl text-base text-ink-tertiary sm:text-lg">
           Connect any PostgreSQL database, ask questions in plain English, and
           let Datagini turn them into SQL, charts, and clear summaries.
         </p>
@@ -78,7 +80,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/auth/login"
-            className="rounded-xl border border-border px-6 py-3 text-sm font-semibold text-gray-200 transition hover:border-gray-500 hover:text-white"
+            className="rounded-xl border border-border px-6 py-3 text-sm font-semibold text-ink-secondary transition hover:border-border-bright hover:text-ink"
           >
             Sign in
           </Link>
@@ -88,27 +90,27 @@ export default function LandingPage() {
           {FEATURES.map(({ icon: Icon, title, description }) => (
             <div key={title} className="p-5 text-left">
               <div className="flex items-center gap-3">
-                <Icon className="h-5 w-5 shrink-0 text-gray-400" />
+                <Icon className="h-5 w-5 shrink-0 text-ink-tertiary" />
                 <div className="h-px flex-1 bg-border" />
               </div>
-              <h3 className="mt-3 text-sm font-semibold text-white">{title}</h3>
-              <p className="mt-1 text-sm text-gray-400">{description}</p>
+              <h3 className="mt-3 text-sm font-semibold text-ink">{title}</h3>
+              <p className="mt-1 text-sm text-ink-tertiary">{description}</p>
             </div>
           ))}
         </div>
       </main>
 
-      <footer className="border-t border-border py-4 text-xs text-gray-500">
+      <footer className="border-t border-border py-4 text-xs text-ink-tertiary">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-1 px-6 text-center sm:flex-row sm:justify-between">
           <p>Datagini — Talk to your database</p>
           <a
             href="https://www.satishhebbal.design/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 transition-colors duration-150 hover:text-gray-300"
+            className="flex items-center gap-1.5 transition-colors duration-150 hover:text-ink-secondary"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/sa26-white.svg" alt="" className="h-4 w-4" />
+            <img src="/sa26-white.svg" alt="" className="h-4 w-4 [.light_&]:invert" />
             a satish&apos;s-lab project
           </a>
         </div>

@@ -33,8 +33,6 @@ const config: Config = {
         "glow-sm": "0 0 12px rgba(120, 113, 108, 0.15)",
         "glow-md": "0 0 24px rgba(120, 113, 108, 0.2)",
         "glow-lg": "0 0 48px rgba(120, 113, 108, 0.12)",
-        "accent-inset":
-          "inset 0 -8px 12px 0 rgba(20, 83, 45, 0.85), inset 0 2px 8px 0 rgba(187, 247, 208, 0.85), inset 2px 0 8px 0 rgba(187, 247, 208, 0.85), inset -2px 0 8px 0 rgba(187, 247, 208, 0.85)",
       },
       borderRadius: {
         xl: "12px",

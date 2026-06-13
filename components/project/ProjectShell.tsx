@@ -25,7 +25,7 @@ export default function ProjectShell({ project, children }: ProjectShellProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <GiniProvider>
+    <GiniProvider projectId={project.id} dbType={project.db_type} aiProvider={project.ai_provider}>
       <div className="flex h-screen bg-bg">
         <ProjectSidebar
           project={project}

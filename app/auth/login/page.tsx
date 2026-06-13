@@ -43,8 +43,8 @@ export default function LoginPage() {
 function LoginForm() {
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>(searchParams.get("mode") === "signup" ? "signup" : "signin");
-  const [email, setEmail] = useState("data@gini.com");
-  const [password, setPassword] = useState("datagini");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
