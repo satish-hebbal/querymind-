@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import FindDbUrlHint from "@/components/FindDbUrlHint";
 import { AI_PROVIDER_ICONS, AI_PROVIDER_LABELS, CUSTOM_PROVIDER_EXAMPLES, DB_TYPE_ICONS, DB_TYPE_LABELS } from "@/lib/provider-meta";
 import type { AiProvider, ProjectConfig } from "@/types";
 
@@ -260,9 +261,12 @@ function DatabaseTab({ projectId, config }: { projectId: string; config: Project
         </div>
 
         <div className="mb-4">
-          <label htmlFor="db-url" className="mb-1 block text-xs font-medium text-ink-secondary">
-            Update connection URL
-          </label>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <label htmlFor="db-url" className="text-xs font-medium text-ink-secondary">
+              Update connection URL
+            </label>
+            <FindDbUrlHint />
+          </div>
           <textarea
             id="db-url"
             rows={2}

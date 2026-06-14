@@ -4,6 +4,7 @@ import { Database, Loader2, LogOut, Plus, Settings, Sparkles, Trash2, X } from "
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import FindDbUrlHint from "@/components/FindDbUrlHint";
 import GiniMascot from "@/components/GiniMascot";
 import ThemeToggle from "@/components/ThemeToggle";
 import { CUSTOM_PROVIDER_EXAMPLES } from "@/lib/provider-meta";
@@ -365,9 +366,12 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
           </div>
 
           <div>
-            <label htmlFor="project-db-url" className="mb-1 block text-xs font-medium text-ink-secondary">
-              DB Connection URL <span className="text-error">*</span>
-            </label>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label htmlFor="project-db-url" className="text-xs font-medium text-ink-secondary">
+                DB Connection URL <span className="text-error">*</span>
+              </label>
+              <FindDbUrlHint />
+            </div>
             <textarea
               id="project-db-url"
               required
