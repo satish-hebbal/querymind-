@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AI_PROVIDER_ICONS, AI_PROVIDER_LABELS, DB_TYPE_ICONS, DB_TYPE_LABELS } from "@/lib/provider-meta";
+import { AI_PROVIDER_ICONS, AI_PROVIDER_LABELS, CUSTOM_PROVIDER_EXAMPLES, DB_TYPE_ICONS, DB_TYPE_LABELS } from "@/lib/provider-meta";
 import type { AiProvider, ProjectConfig } from "@/types";
 
 const AI_PROVIDER_INFO: Record<AiProvider, { label: string; note: string; keyUrl: string; keyUrlLabel: string; requiresKey: boolean }> = {
@@ -43,6 +43,13 @@ const AI_PROVIDER_INFO: Record<AiProvider, { label: string; note: string; keyUrl
     keyUrl: "https://console.anthropic.com/settings/keys",
     keyUrlLabel: "Get an Anthropic API key",
     requiresKey: true,
+  },
+  custom: {
+    label: AI_PROVIDER_LABELS.custom,
+    note: "Connects to any OpenAI-compatible API — DeepSeek, Qwen, Mistral, OpenRouter, or a self-hosted server (Ollama, vLLM, LM Studio, etc.). Set the base URL and model name below, and add an API key if your endpoint requires one.",
+    keyUrl: "",
+    keyUrlLabel: "",
+    requiresKey: false,
   },
 };
 
@@ -409,6 +416,8 @@ function AiModelTab({ projectId, config }: { projectId: string; config: ProjectC
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [hasKey, setHasKey] = useState(config.has_ai_api_key);
+  const [aiBaseUrl, setAiBaseUrl] = useState(config.ai_base_url ?? "");
+  const [aiModel, setAiModel] = useState(config.ai_model ?? "");
   const [saveState, setSaveState] = useState<AsyncState>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -443,8 +452,26 @@ function AiModelTab({ projectId, config }: { projectId: string; config: ProjectC
   }
 
   async function handleSave() {
+    if (aiProvider === "custom") {
+      if (!aiBaseUrl.trim() || !/^https?:\/\//i.test(aiBaseUrl.trim())) {
+        setSaveState("error");
+        setSaveError("Enter a base URL starting with http:// or https://.");
+        return;
+      }
+
+      if (!aiModel.trim()) {
+        setSaveState("error");
+        setSaveError("Enter a model name.");
+        return;
+      }
+    }
+
     const body: Record<string, unknown> = { aiProvider };
     if (apiKeyInput.trim()) body.aiApiKey = apiKeyInput.trim();
+    if (aiProvider === "custom") {
+      body.aiBaseUrl = aiBaseUrl.trim();
+      body.aiModel = aiModel.trim();
+    }
 
     const ok = await saveConfig(body);
     if (ok && apiKeyInput.trim()) {
@@ -468,13 +495,17 @@ function AiModelTab({ projectId, config }: { projectId: string; config: ProjectC
         <p className="mb-4 text-xs text-ink-dim">Choose which model generates SQL and summaries for this project.</p>
 
         <p className="mb-4 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-ink-dim">
-          When you ask a question, your database schema (table and column names) and the resulting query
-          results are sent to the provider below to generate SQL and a plain-English summary. If you use your
-          own API key, that data is sent under your account&apos;s agreement with that provider.
+          Pick a provider below — Gemini, GPT-4o, Claude, or your own OpenAI-compatible endpoint via
+          &quot;Custom&quot; (DeepSeek, Qwen, Mistral, OpenRouter, self-hosted Ollama/vLLM, etc.). Use the
+          shared Gemini key to get started, or bring your own API key for higher limits and full control
+          over your data, with no lock-in. When you ask a question, your database schema (table and column
+          names) and the resulting query results are sent to the selected provider to generate SQL and a
+          plain-English summary; with your own key or endpoint, that data is sent under your account&apos;s
+          agreement with that provider.
         </p>
 
-        <div className="mb-4 grid grid-cols-3 gap-2">
-          {(["gemini", "openai", "claude"] as AiProvider[]).map((provider) => (
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {(["gemini", "openai", "claude", "custom"] as AiProvider[]).map((provider) => (
             <button key={provider} type="button" onClick={() => setAiProvider(provider)} className={selectorButtonClass(aiProvider === provider)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={AI_PROVIDER_ICONS[provider]} alt="" className="h-4 w-4 shrink-0" />
@@ -484,15 +515,65 @@ function AiModelTab({ projectId, config }: { projectId: string; config: ProjectC
         </div>
 
         <p className="mb-2 text-xs text-ink-secondary">{info.note}</p>
-        <a
-          href={info.keyUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mb-4 inline-flex items-center gap-1 text-xs text-ink-secondary transition-colors duration-150 hover:text-ink hover:underline"
-        >
-          {info.keyUrlLabel}
-          <ExternalLink size={12} strokeWidth={1.5} />
-        </a>
+
+        {aiProvider === "custom" && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {CUSTOM_PROVIDER_EXAMPLES.map((example) => (
+              <span
+                key={example.label}
+                className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-ink-secondary"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={example.icon} alt="" className="h-3.5 w-3.5 shrink-0" />
+                {example.label}
+              </span>
+            ))}
+            <span className="text-xs text-ink-dim">+ OpenRouter, Ollama, vLLM, LM Studio…</span>
+          </div>
+        )}
+
+        {info.keyUrl && (
+          <a
+            href={info.keyUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mb-4 inline-flex items-center gap-1 text-xs text-ink-secondary transition-colors duration-150 hover:text-ink hover:underline"
+          >
+            {info.keyUrlLabel}
+            <ExternalLink size={12} strokeWidth={1.5} />
+          </a>
+        )}
+
+        {aiProvider === "custom" && (
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor="ai-base-url" className="mb-1 block text-xs font-medium text-ink-secondary">
+                Base URL <span className="text-error">*</span>
+              </label>
+              <input
+                id="ai-base-url"
+                type="text"
+                value={aiBaseUrl}
+                onChange={(event) => setAiBaseUrl(event.target.value)}
+                placeholder="https://api.deepseek.com/v1"
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 font-mono text-[13px] text-ink placeholder-ink-dim transition-all duration-150 focus:border-accent focus:outline-none focus:shadow-glow-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="ai-model" className="mb-1 block text-xs font-medium text-ink-secondary">
+                Model name <span className="text-error">*</span>
+              </label>
+              <input
+                id="ai-model"
+                type="text"
+                value={aiModel}
+                onChange={(event) => setAiModel(event.target.value)}
+                placeholder="deepseek-chat"
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 font-mono text-[13px] text-ink placeholder-ink-dim transition-all duration-150 focus:border-accent focus:outline-none focus:shadow-glow-sm"
+              />
+            </div>
+          </div>
+        )}
 
         <div className="mb-2">
           <label htmlFor="ai-key" className="mb-1 block text-xs font-medium text-ink-secondary">

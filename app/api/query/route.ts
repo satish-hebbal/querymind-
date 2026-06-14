@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
-    .select("db_url, ai_provider, ai_api_key")
+    .select("db_url, ai_provider, ai_api_key, ai_base_url, ai_model")
     .eq("id", projectId)
     .single();
 
@@ -53,6 +53,8 @@ export async function POST(req: NextRequest) {
     const dbUrl = decrypt(project.db_url as string);
     const aiProvider = project.ai_provider as AiProvider;
     const aiApiKey = project.ai_api_key ? decrypt(project.ai_api_key as string) : null;
+    const aiBaseUrl = project.ai_base_url as string | null;
+    const aiModel = project.ai_model as string | null;
 
     const formatError = validateConnectionString(dbUrl);
     if (formatError) {
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest) {
     const schema = await getProjectSchema(projectId, dbUrl);
 
     try {
-      sql = await generateSQL(question, schema, aiProvider, aiApiKey);
+      sql = await generateSQL(question, schema, aiProvider, aiApiKey, aiBaseUrl, aiModel);
     } catch (aiError) {
       return NextResponse.json<QueryApiError>(
         { error: `Couldn't generate a query: ${describeAiError(aiError, aiProvider)}`, errorKind: "hard" },
@@ -92,7 +94,7 @@ export async function POST(req: NextRequest) {
 
     let summary: string | undefined;
     try {
-      summary = await generateSummary(question, result.columns, result.rows, result.rowCount, aiProvider, aiApiKey);
+      summary = await generateSummary(question, result.columns, result.rows, result.rowCount, aiProvider, aiApiKey, aiBaseUrl, aiModel);
     } catch (error) {
       console.error("Summary generation error:", error);
     }

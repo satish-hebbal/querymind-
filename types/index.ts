@@ -48,7 +48,7 @@ export type ViewMode = "chart" | "table";
 
 export type DbType = "postgresql" | "mysql" | "sqlite";
 
-export type AiProvider = "gemini" | "openai" | "claude";
+export type AiProvider = "gemini" | "openai" | "claude" | "custom";
 
 export interface Project {
   id: string;
@@ -63,6 +63,10 @@ export interface Project {
 export interface ProjectConfig extends Project {
   db_url_masked: string;
   has_ai_api_key: boolean;
+  /** Base URL of the OpenAI-compatible endpoint, only used when ai_provider is "custom". */
+  ai_base_url: string | null;
+  /** Model name to request from the custom endpoint, only used when ai_provider is "custom". */
+  ai_model: string | null;
 }
 
 export interface ChatHistoryItem {

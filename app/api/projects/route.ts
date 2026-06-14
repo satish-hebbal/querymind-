@@ -6,7 +6,7 @@ import type { AiProvider, DbType, Project } from "@/types";
 export const dynamic = "force-dynamic";
 
 const DB_TYPES: DbType[] = ["postgresql", "mysql", "sqlite"];
-const AI_PROVIDERS: AiProvider[] = ["gemini", "openai", "claude"];
+const AI_PROVIDERS: AiProvider[] = ["gemini", "openai", "claude", "custom"];
 
 export async function GET() {
   const supabase = createClient();
@@ -54,6 +54,8 @@ export async function POST(req: NextRequest) {
       ? (input.aiProvider as AiProvider)
       : "gemini";
   const aiApiKey = typeof input.aiApiKey === "string" ? input.aiApiKey.trim() : "";
+  const aiBaseUrl = typeof input.aiBaseUrl === "string" ? input.aiBaseUrl.trim() : "";
+  const aiModel = typeof input.aiModel === "string" ? input.aiModel.trim() : "";
 
   if (!name) {
     return NextResponse.json({ error: "Project name is required." }, { status: 400 });
@@ -67,6 +69,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `An API key is required for ${aiProvider === "openai" ? "GPT-4o" : "Claude"}.` }, { status: 400 });
   }
 
+  if (aiProvider === "custom") {
+    if (!aiBaseUrl || !/^https?:\/\//i.test(aiBaseUrl)) {
+      return NextResponse.json({ error: "A base URL (starting with http:// or https://) is required for a custom provider." }, { status: 400 });
+    }
+
+    if (!aiModel) {
+      return NextResponse.json({ error: "A model name is required for a custom provider." }, { status: 400 });
+    }
+  }
+
   const { data, error } = await supabase
     .from("projects")
     .insert({
@@ -77,6 +89,8 @@ export async function POST(req: NextRequest) {
       db_type: dbType,
       ai_provider: aiProvider,
       ai_api_key: aiApiKey ? encrypt(aiApiKey) : null,
+      ai_base_url: aiProvider === "custom" ? aiBaseUrl : null,
+      ai_model: aiProvider === "custom" ? aiModel : null,
     })
     .select("id, name, description, db_type, ai_provider, created_at")
     .single();

@@ -76,15 +76,16 @@ const AI_PROVIDER_LABELS: Record<AiProvider, string> = {
   gemini: "Gemini",
   openai: "OpenAI",
   claude: "Claude",
+  custom: "Custom",
 };
 
-const AI_BILLING_URLS: Record<AiProvider, string> = {
+const AI_BILLING_URLS: Partial<Record<AiProvider, string>> = {
   gemini: "https://ai.google.dev/gemini-api/docs/rate-limits",
   openai: "https://platform.openai.com/account/billing",
   claude: "https://console.anthropic.com/settings/billing",
 };
 
-/** Turns a raw AI-provider error (Gemini/OpenAI/Claude) into a clear, plain-language message. */
+/** Turns a raw AI-provider error (Gemini/OpenAI/Claude/custom) into a clear, plain-language message. */
 export function describeAiError(error: unknown, provider: AiProvider): string {
   if (!(error instanceof Error)) {
     return "Something unexpected went wrong while generating the query.";
@@ -93,22 +94,32 @@ export function describeAiError(error: unknown, provider: AiProvider): string {
   const message = error.message;
   const label = AI_PROVIDER_LABELS[provider];
 
-  if (message.startsWith("No API key configured for")) {
+  if (message.startsWith("No API key configured for") || message.includes("configured for the custom provider")) {
     return message;
   }
 
   if (/429|too many requests|rate.?limit|quota/i.test(message)) {
-    return provider === "gemini" && message.includes("free_tier")
-      ? `The shared free ${label} key has hit its daily limit for the free tier. Wait a minute and try again, or add your own ${label} API key in Config → AI Model for higher limits. (${AI_BILLING_URLS[provider]})`
-      : `${label} is rate-limiting requests right now. Wait a moment and try again, or check your usage/billing at ${AI_BILLING_URLS[provider]}.`;
+    const billingUrl = AI_BILLING_URLS[provider];
+
+    if (provider === "gemini" && message.includes("free_tier")) {
+      return `The shared free ${label} key has hit its daily limit for the free tier. Wait a minute and try again, or add your own ${label} API key in Config → AI Model for higher limits. (${billingUrl})`;
+    }
+
+    return billingUrl
+      ? `${label} is rate-limiting requests right now. Wait a moment and try again, or check your usage/billing at ${billingUrl}.`
+      : "Your custom endpoint is rate-limiting requests right now. Wait a moment and try again.";
   }
 
   if (/401|invalid.*api.?key|api.?key.*invalid|unauthorized|authentication/i.test(message)) {
-    return `Your ${label} API key was rejected. Check it in Config → AI Model, or remove it to use the shared free key (Gemini only).`;
+    return provider === "custom"
+      ? "The custom endpoint rejected your API key. Check the key, base URL, and model name in Config → AI Model."
+      : `Your ${label} API key was rejected. Check it in Config → AI Model, or remove it to use the shared free key (Gemini only).`;
   }
 
-  if (/timeout|timed out|network/i.test(message)) {
-    return `Couldn't reach ${label} right now. Check your connection and try again.`;
+  if (/timeout|timed out|network|ECONNREFUSED|ENOTFOUND/i.test(message)) {
+    return provider === "custom"
+      ? "Couldn't reach the custom endpoint. Check the base URL in Config → AI Model and make sure the server is running and reachable."
+      : `Couldn't reach ${label} right now. Check your connection and try again.`;
   }
 
   const firstLine = message.split("\n")[0];

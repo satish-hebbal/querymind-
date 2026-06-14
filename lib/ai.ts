@@ -114,6 +114,11 @@ function resolveApiKey(provider: AiProvider, apiKey?: string | null): string {
     return process.env.GEMINI_API_KEY;
   }
 
+  // Self-hosted/open-source endpoints often don't require auth at all.
+  if (provider === "custom") {
+    return "not-needed";
+  }
+
   throw new Error(`No API key configured for ${provider}. Add one in the project's AI Model settings.`);
 }
 
@@ -156,7 +161,45 @@ async function callClaude(prompt: string, apiKey: string, maxTokens = 1024): Pro
   return block?.type === "text" ? block.text : "";
 }
 
-async function callModel(provider: AiProvider, prompt: string, apiKey: string, maxTokens?: number): Promise<string> {
+/**
+ * Calls a custom OpenAI-compatible endpoint — covers DeepSeek, Qwen, Mistral,
+ * OpenRouter, and self-hosted servers (Ollama, vLLM, LM Studio, etc.).
+ */
+async function callCustom(
+  prompt: string,
+  apiKey: string,
+  baseUrl: string | null | undefined,
+  model: string | null | undefined,
+  maxTokens?: number
+): Promise<string> {
+  if (!baseUrl) {
+    throw new Error("No base URL configured for the custom provider. Add one in the project's AI Model settings.");
+  }
+
+  if (!model) {
+    throw new Error("No model name configured for the custom provider. Add one in the project's AI Model settings.");
+  }
+
+  const client = new OpenAI({ apiKey, baseURL: baseUrl });
+
+  const completion = await client.chat.completions.create({
+    model,
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.2,
+    ...(maxTokens ? { max_tokens: maxTokens } : {}),
+  });
+
+  return completion.choices[0]?.message?.content ?? "";
+}
+
+async function callModel(
+  provider: AiProvider,
+  prompt: string,
+  apiKey: string,
+  maxTokens?: number,
+  baseUrl?: string | null,
+  model?: string | null
+): Promise<string> {
   switch (provider) {
     case "gemini":
       return callGemini(prompt, apiKey, maxTokens);
@@ -164,6 +207,8 @@ async function callModel(provider: AiProvider, prompt: string, apiKey: string, m
       return callOpenAI(prompt, apiKey, maxTokens);
     case "claude":
       return callClaude(prompt, apiKey, maxTokens);
+    case "custom":
+      return callCustom(prompt, apiKey, baseUrl, model, maxTokens);
   }
 }
 
@@ -176,11 +221,13 @@ export async function generateSQL(
   question: string,
   schema: string,
   provider: AiProvider,
-  apiKey?: string | null
+  apiKey?: string | null,
+  baseUrl?: string | null,
+  model?: string | null
 ): Promise<string> {
   const key = resolveApiKey(provider, apiKey);
   const prompt = buildSqlPrompt(schema, question);
-  const text = await callModel(provider, prompt, key);
+  const text = await callModel(provider, prompt, key, undefined, baseUrl, model);
 
   return cleanSqlResponse(text);
 }
@@ -195,11 +242,13 @@ export async function generateSummary(
   rows: ResultRow[],
   rowCount: number,
   provider: AiProvider,
-  apiKey?: string | null
+  apiKey?: string | null,
+  baseUrl?: string | null,
+  model?: string | null
 ): Promise<string> {
   const key = resolveApiKey(provider, apiKey);
   const prompt = buildSummaryPrompt(question, columns, rows, rowCount);
-  const text = await callModel(provider, prompt, key, 100);
+  const text = await callModel(provider, prompt, key, 100, baseUrl, model);
 
   return text.trim();
 }

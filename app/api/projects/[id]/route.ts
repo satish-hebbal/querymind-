@@ -7,7 +7,7 @@ import type { AiProvider, DbType, ProjectConfig } from "@/types";
 export const dynamic = "force-dynamic";
 
 const DB_TYPES: DbType[] = ["postgresql", "mysql", "sqlite"];
-const AI_PROVIDERS: AiProvider[] = ["gemini", "openai", "claude"];
+const AI_PROVIDERS: AiProvider[] = ["gemini", "openai", "claude", "custom"];
 
 interface RouteParams {
   params: { id: string };
@@ -23,7 +23,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
   const { data, error } = await supabase
     .from("projects")
-    .select("id, name, description, db_url, db_type, ai_provider, ai_api_key, created_at")
+    .select("id, name, description, db_url, db_type, ai_provider, ai_api_key, ai_base_url, ai_model, created_at")
     .eq("id", params.id)
     .single();
 
@@ -47,6 +47,8 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     created_at: data.created_at,
     db_url_masked: dbUrlMasked,
     has_ai_api_key: Boolean(data.ai_api_key),
+    ai_base_url: data.ai_base_url,
+    ai_model: data.ai_model,
   };
 
   return NextResponse.json({ project: config });
@@ -93,6 +95,20 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   if (typeof input.aiApiKey === "string") {
     const trimmed = input.aiApiKey.trim();
     updates.ai_api_key = trimmed ? encrypt(trimmed) : null;
+  }
+
+  if (typeof input.aiBaseUrl === "string") {
+    const trimmed = input.aiBaseUrl.trim();
+
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      return NextResponse.json({ error: "The custom provider base URL must start with http:// or https://." }, { status: 400 });
+    }
+
+    updates.ai_base_url = trimmed || null;
+  }
+
+  if (typeof input.aiModel === "string") {
+    updates.ai_model = input.aiModel.trim() || null;
   }
 
   if (Object.keys(updates).length === 0) {

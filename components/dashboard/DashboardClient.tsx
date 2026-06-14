@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import GiniMascot from "@/components/GiniMascot";
 import ThemeToggle from "@/components/ThemeToggle";
+import { CUSTOM_PROVIDER_EXAMPLES } from "@/lib/provider-meta";
 import { createClient } from "@/lib/supabase/client";
 import type { AiProvider, DbType, Project } from "@/types";
 
@@ -19,7 +20,16 @@ const AI_PROVIDER_LABELS: Record<AiProvider, string> = {
   gemini: "Gemini",
   openai: "GPT-4o",
   claude: "Claude",
+  custom: "Custom",
 };
+
+function providerButtonClass(active: boolean): string {
+  return `rounded-lg border px-3 py-2 text-sm transition-all duration-150 active:scale-[0.97] ${
+    active
+      ? "border-border-bright bg-elevated text-ink shadow-glow-sm"
+      : "border-border text-ink-secondary hover:border-border-bright"
+  }`;
+}
 
 interface DashboardClientProps {
   projects: Project[];
@@ -208,6 +218,8 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
   const [dbUrl, setDbUrl] = useState("");
   const [aiProvider, setAiProvider] = useState<AiProvider>("gemini");
   const [aiApiKey, setAiApiKey] = useState("");
+  const [aiBaseUrl, setAiBaseUrl] = useState("");
+  const [aiModel, setAiModel] = useState("");
   const [testState, setTestState] = useState<"idle" | "testing" | "success" | "error">("idle");
   const [testError, setTestError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -263,6 +275,18 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
       return;
     }
 
+    if (aiProvider === "custom") {
+      if (!aiBaseUrl.trim() || !/^https?:\/\//i.test(aiBaseUrl.trim())) {
+        setFormError("A base URL (starting with http:// or https://) is required for a custom provider.");
+        return;
+      }
+
+      if (!aiModel.trim()) {
+        setFormError("A model name is required for a custom provider.");
+        return;
+      }
+    }
+
     setSubmitting(true);
 
     try {
@@ -275,6 +299,8 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
           dbUrl: dbUrl.trim(),
           aiProvider,
           aiApiKey: aiApiKey.trim(),
+          aiBaseUrl: aiBaseUrl.trim(),
+          aiModel: aiModel.trim(),
         }),
       });
 
@@ -383,47 +409,73 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
 
           <div>
             <label className="mb-1 block text-xs font-medium text-ink-secondary">AI Provider</label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setAiProvider("gemini")}
-                className={`rounded-lg border px-3 py-2 text-sm transition-all duration-150 active:scale-[0.97] ${
-                  aiProvider === "gemini"
-                    ? "border-border-bright bg-elevated text-ink shadow-glow-sm"
-                    : "border-border text-ink-secondary hover:border-border-bright"
-                }`}
-              >
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <button type="button" onClick={() => setAiProvider("gemini")} className={providerButtonClass(aiProvider === "gemini")}>
                 Gemini (free)
               </button>
-              <button
-                type="button"
-                onClick={() => setAiProvider("openai")}
-                className={`rounded-lg border px-3 py-2 text-sm transition-all duration-150 active:scale-[0.97] ${
-                  aiProvider === "openai"
-                    ? "border-border-bright bg-elevated text-ink shadow-glow-sm"
-                    : "border-border text-ink-secondary hover:border-border-bright"
-                }`}
-              >
+              <button type="button" onClick={() => setAiProvider("openai")} className={providerButtonClass(aiProvider === "openai")}>
                 GPT-4o
               </button>
-              <button
-                type="button"
-                onClick={() => setAiProvider("claude")}
-                className={`rounded-lg border px-3 py-2 text-sm transition-all duration-150 active:scale-[0.97] ${
-                  aiProvider === "claude"
-                    ? "border-border-bright bg-elevated text-ink shadow-glow-sm"
-                    : "border-border text-ink-secondary hover:border-border-bright"
-                }`}
-              >
+              <button type="button" onClick={() => setAiProvider("claude")} className={providerButtonClass(aiProvider === "claude")}>
                 Claude
               </button>
+              <button type="button" onClick={() => setAiProvider("custom")} className={providerButtonClass(aiProvider === "custom")}>
+                Custom
+              </button>
             </div>
+            {aiProvider === "custom" && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {CUSTOM_PROVIDER_EXAMPLES.map((example) => (
+                  <span
+                    key={example.label}
+                    className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs text-ink-secondary"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={example.icon} alt="" className="h-3.5 w-3.5 shrink-0" />
+                    {example.label}
+                  </span>
+                ))}
+                <span className="text-xs text-ink-dim">+ OpenRouter, Ollama, vLLM, LM Studio…</span>
+              </div>
+            )}
           </div>
 
-          {(aiProvider === "openai" || aiProvider === "claude") && (
+          {aiProvider === "custom" && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="project-ai-base-url" className="mb-1 block text-xs font-medium text-ink-secondary">
+                  Base URL <span className="text-error">*</span>
+                </label>
+                <input
+                  id="project-ai-base-url"
+                  type="text"
+                  value={aiBaseUrl}
+                  onChange={(event) => setAiBaseUrl(event.target.value)}
+                  placeholder="https://api.deepseek.com/v1"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 font-mono text-xs text-ink placeholder-ink-dim transition-all duration-150 focus:border-accent focus:outline-none focus:shadow-glow-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="project-ai-model" className="mb-1 block text-xs font-medium text-ink-secondary">
+                  Model name <span className="text-error">*</span>
+                </label>
+                <input
+                  id="project-ai-model"
+                  type="text"
+                  value={aiModel}
+                  onChange={(event) => setAiModel(event.target.value)}
+                  placeholder="deepseek-chat"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 font-mono text-xs text-ink placeholder-ink-dim transition-all duration-150 focus:border-accent focus:outline-none focus:shadow-glow-sm"
+                />
+              </div>
+            </div>
+          )}
+
+          {(aiProvider === "openai" || aiProvider === "claude" || aiProvider === "custom") && (
             <div>
               <label htmlFor="project-ai-key" className="mb-1 block text-xs font-medium text-ink-secondary">
-                {AI_PROVIDER_LABELS[aiProvider]} API Key <span className="text-error">*</span>
+                {AI_PROVIDER_LABELS[aiProvider]} API Key{" "}
+                {aiProvider === "custom" ? <span className="text-ink-dim">(optional)</span> : <span className="text-error">*</span>}
               </label>
               <input
                 id="project-ai-key"

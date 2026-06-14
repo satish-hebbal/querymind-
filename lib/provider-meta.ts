@@ -16,10 +16,19 @@ export const AI_PROVIDER_LABELS: Record<AiProvider, string> = {
   gemini: "Gemini",
   openai: "GPT-4o",
   claude: "Claude",
+  custom: "Custom",
 };
 
 export const AI_PROVIDER_ICONS: Record<AiProvider, string> = {
   gemini: "/model-icons/gemini-icon.svg",
   openai: "/model-icons/openai-icon.svg",
   claude: "/model-icons/claude-icon.svg",
+  custom: "/model-icons/custom-icon.svg",
 };
+
+/** Example OpenAI-compatible providers shown alongside the "Custom" option. */
+export const CUSTOM_PROVIDER_EXAMPLES: { label: string; icon: string }[] = [
+  { label: "DeepSeek", icon: "/model-icons/deepseek-logo-icon.svg" },
+  { label: "Qwen", icon: "/model-icons/qwen-ai-icon.svg" },
+  { label: "Mistral", icon: "/model-icons/mistral-ai-icon.svg" },
+];

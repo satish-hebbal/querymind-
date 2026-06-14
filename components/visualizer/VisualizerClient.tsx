@@ -35,14 +35,14 @@ function TableNode({ data, selected }: NodeProps<TableNodeType>) {
 
   return (
     <div
-      className={`w-[260px] cursor-pointer overflow-hidden rounded-lg border bg-[#1c1917] text-xs transition-all duration-150 ${
-        selected ? "border-[#a8a29e] shadow-glow-md" : "border-[#44403c] hover:border-[#57534e]"
+      className={`w-[260px] cursor-pointer overflow-hidden rounded-lg border bg-card text-xs transition-all duration-150 ${
+        selected ? "border-border-bright shadow-glow-md" : "border-border hover:border-border-bright"
       }`}
     >
-      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-none !bg-[#a8a29e]" />
-      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-none !bg-[#a8a29e]" />
+      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-none !bg-border-bright" />
+      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-none !bg-border-bright" />
 
-      <div className="truncate border-b border-[#44403c] bg-[#292524] px-3 py-2 font-semibold text-[#fafaf9]">
+      <div className="truncate border-b border-border bg-elevated px-3 py-2 font-semibold text-ink">
         {table.name}
       </div>
 
@@ -50,14 +50,14 @@ function TableNode({ data, selected }: NodeProps<TableNodeType>) {
         {table.columns.map((column) => (
           <div
             key={column.name}
-            className="flex items-center justify-between gap-2 border-b border-[#44403c]/60 px-3 py-1.5 last:border-b-0"
+            className="flex items-center justify-between gap-2 border-b border-border/60 px-3 py-1.5 last:border-b-0"
           >
-            <div className="flex min-w-0 items-center gap-1.5 text-[#d6d3d1]">
-              {column.isPK && <Key size={12} strokeWidth={1.5} className="shrink-0 text-[#e7e5e4]" />}
-              {column.isFK && <Link2 size={12} strokeWidth={1.5} className="shrink-0 text-[#78716c]" />}
+            <div className="flex min-w-0 items-center gap-1.5 text-ink-secondary">
+              {column.isPK && <Key size={12} strokeWidth={1.5} className="shrink-0 text-ink" />}
+              {column.isFK && <Link2 size={12} strokeWidth={1.5} className="shrink-0 text-ink-dim" />}
               <span className="truncate">{column.name}</span>
             </div>
-            <span className="shrink-0 rounded bg-[#44403c] px-1.5 py-0.5 text-[10px] text-[#a8a29e]">{column.type}</span>
+            <span className="shrink-0 rounded bg-elevated px-1.5 py-0.5 text-[10px] text-ink-secondary">{column.type}</span>
           </div>
         ))}
       </div>
@@ -67,7 +67,7 @@ function TableNode({ data, selected }: NodeProps<TableNodeType>) {
 
 const nodeTypes = { table: TableNode };
 
-function buildGraph(schema: SchemaResponse): { nodes: TableNodeType[]; edges: Edge[] } {
+function buildGraph(schema: SchemaResponse, isLight: boolean): { nodes: TableNodeType[]; edges: Edge[] } {
   const graph = new dagre.graphlib.Graph();
   graph.setDefaultEdgeLabel(() => ({}));
   graph.setGraph({ rankdir: "LR", nodesep: 60, ranksep: 140 });
@@ -94,8 +94,8 @@ function buildGraph(schema: SchemaResponse): { nodes: TableNodeType[]; edges: Ed
           type: "smoothstep",
           markerEnd: { type: MarkerType.ArrowClosed, color: "#6366f1" },
           style: { stroke: "#6366f1" },
-          labelStyle: { fill: "#9ca3af", fontSize: 10 },
-          labelBgStyle: { fill: "#1a1a1a" },
+          labelStyle: { fill: isLight ? "#78716c" : "#9ca3af", fontSize: 10 },
+          labelBgStyle: { fill: isLight ? "#f5f5f4" : "#1a1a1a" },
         });
         graph.setEdge(table.name, column.foreignTable);
       }
@@ -131,6 +131,18 @@ export default function VisualizerClient({ projectId }: VisualizerClientProps) {
   const [tableInfo, setTableInfo] = useState<TableInfo | null>(null);
   const [tableInfoLoading, setTableInfoLoading] = useState(false);
   const [tableInfoError, setTableInfoError] = useState<string | null>(null);
+  const [isLight, setIsLight] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const update = () => setIsLight(root.classList.contains("light"));
+    update();
+
+    const observer = new MutationObserver(update);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,7 +163,10 @@ export default function VisualizerClient({ projectId }: VisualizerClientProps) {
     };
   }, [projectId]);
 
-  const { nodes, edges } = useMemo(() => (schema ? buildGraph(schema) : { nodes: [], edges: [] }), [schema]);
+  const { nodes, edges } = useMemo(
+    () => (schema ? buildGraph(schema, isLight) : { nodes: [], edges: [] }),
+    [schema, isLight]
+  );
 
   useEffect(() => {
     if (!selectedTable) {
@@ -189,13 +204,13 @@ export default function VisualizerClient({ projectId }: VisualizerClientProps) {
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center px-4 text-center text-sm text-red-300">{error}</div>
+      <div className="flex h-full items-center justify-center px-4 text-center text-sm text-error">{error}</div>
     );
   }
 
   if (!schema) {
     return (
-      <div className="flex h-full items-center justify-center text-gray-400">
+      <div className="flex h-full items-center justify-center text-ink-dim">
         <Loader2 className="h-5 w-5 animate-spin" />
       </div>
     );
@@ -203,7 +218,7 @@ export default function VisualizerClient({ projectId }: VisualizerClientProps) {
 
   if (schema.tables.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center px-4 text-center text-sm text-gray-400">
+      <div className="flex h-full items-center justify-center px-4 text-center text-sm text-ink-dim">
         No tables found in the public schema.
       </div>
     );
@@ -218,12 +233,18 @@ export default function VisualizerClient({ projectId }: VisualizerClientProps) {
           nodeTypes={nodeTypes}
           onNodeClick={(_event, node) => setSelectedTable((node as TableNodeType).data.table)}
           onPaneClick={() => setSelectedTable(null)}
-          colorMode="dark"
+          colorMode={isLight ? "light" : "dark"}
           fitView
         >
-          <Background color="#2a2a2a" />
+          <Background color={isLight ? "#d6d3d1" : "#2a2a2a"} />
           <Controls />
-          <MiniMap pannable zoomable bgColor="#111111" maskColor="rgba(10,10,10,0.6)" nodeColor="#6366f1" />
+          <MiniMap
+            pannable
+            zoomable
+            bgColor={isLight ? "#f5f5f4" : "#111111"}
+            maskColor={isLight ? "rgba(245,245,244,0.6)" : "rgba(10,10,10,0.6)"}
+            nodeColor="#6366f1"
+          />
         </ReactFlow>
       </div>
 
@@ -254,8 +275,8 @@ function DetailPanel({ table, info, loading, error, onClose, onAsk }: DetailPane
   return (
     <aside className="absolute inset-y-0 right-0 z-10 flex w-full max-w-sm flex-col border-l border-border bg-surface shadow-2xl sm:w-80">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="truncate text-sm font-semibold text-gray-100">{table.name}</h2>
-        <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1 text-gray-400 hover:text-gray-200">
+        <h2 className="truncate text-sm font-semibold text-ink">{table.name}</h2>
+        <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1 text-ink-dim hover:text-ink">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -263,37 +284,37 @@ function DetailPanel({ table, info, loading, error, onClose, onAsk }: DetailPane
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {loading && (
           <div className="flex items-center justify-center py-4">
-            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-ink-dim" />
           </div>
         )}
 
-        {error && <p className="text-sm text-red-300">{error}</p>}
+        {error && <p className="text-sm text-error">{error}</p>}
 
         {info && (
           <>
             <div>
-              <p className="text-xs text-gray-500">Row count</p>
-              <p className="text-lg font-semibold text-gray-100">{info.rowCount.toLocaleString("en-IN")}</p>
+              <p className="text-xs text-ink-dim">Row count</p>
+              <p className="text-lg font-semibold text-ink">{info.rowCount.toLocaleString("en-IN")}</p>
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Columns</p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-dim">Columns</p>
               <ul className="space-y-1">
                 {table.columns.map((column) => (
                   <li key={column.name} className="flex items-center justify-between gap-2 text-xs">
-                    <span className="flex items-center gap-1.5 text-gray-300">
-                      {column.isPK && <Key className="h-3 w-3 shrink-0 text-gray-100" />}
-                      {column.isFK && <Link2 className="h-3 w-3 shrink-0 text-gray-500" />}
+                    <span className="flex items-center gap-1.5 text-ink-secondary">
+                      {column.isPK && <Key className="h-3 w-3 shrink-0 text-ink" />}
+                      {column.isFK && <Link2 className="h-3 w-3 shrink-0 text-ink-dim" />}
                       {column.name}
                     </span>
-                    <span className="shrink-0 text-gray-500">{column.type}</span>
+                    <span className="shrink-0 text-ink-dim">{column.type}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Sample data</p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-dim">Sample data</p>
               <ResultTable result={{ sql: "", columns: info.columns, rows: info.sample, rowCount: info.sample.length }} />
             </div>
           </>

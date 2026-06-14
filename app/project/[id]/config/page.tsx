@@ -20,7 +20,7 @@ export default async function ConfigPage({ params }: ConfigPageProps) {
 
   const { data, error } = await supabase
     .from("projects")
-    .select("id, name, description, db_url, db_type, ai_provider, ai_api_key, created_at")
+    .select("id, name, description, db_url, db_type, ai_provider, ai_api_key, ai_base_url, ai_model, created_at")
     .eq("id", params.id)
     .single();
 
@@ -44,6 +44,8 @@ export default async function ConfigPage({ params }: ConfigPageProps) {
     created_at: data.created_at,
     db_url_masked: dbUrlMasked,
     has_ai_api_key: Boolean(data.ai_api_key),
+    ai_base_url: data.ai_base_url,
+    ai_model: data.ai_model,
   };
 
   return <ConfigClient projectId={params.id} config={config} />;
