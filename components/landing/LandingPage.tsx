@@ -115,8 +115,8 @@ export default function LandingPage() {
         </section>
 
         {/* Trust bar */}
-        <section className="border-y border-border px-6 py-3">
-          <p className="mx-auto max-w-4xl text-center text-xs text-ink-tertiary sm:text-sm">
+        <section className="flex justify-center px-6 py-4">
+          <p className="rounded-full border border-border bg-surface px-5 py-2 text-xs text-ink-tertiary sm:text-sm">
             Works with PostgreSQL · BYOK — OpenAI, Claude, Gemini · No data stored on our servers
           </p>
         </section>
