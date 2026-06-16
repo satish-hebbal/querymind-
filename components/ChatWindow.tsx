@@ -143,7 +143,7 @@ function MessageBubble({ message, onSuggestionClick }: { message: ChatMessage; o
           {!message.isLoading && message.error && <ErrorCard message={message} onSuggestionClick={onSuggestionClick} />}
           {!message.isLoading && message.result && <ResultDisplay result={message.result} />}
         </div>
-        <span className="mt-1 pl-1 text-[11px] text-ink-dim">{time}</span>
+        {!message.isLoading && <span className="mt-1 pl-1 text-[11px] text-ink-dim">{time}</span>}
       </div>
     </div>
   );
