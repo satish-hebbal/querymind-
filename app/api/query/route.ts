@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     if (sql.trim().toUpperCase() === CANNOT_ANSWER) {
       const suggestions = await generateSuggestions(question, schema, aiProvider, aiApiKey, aiBaseUrl, aiModel);
       return NextResponse.json<QueryApiError>(
-        { error: "That can't be answered from the available data. Here are some questions you can ask instead:", errorKind: "soft", suggestions },
+        { error: "That can't be answered from the available data.", errorKind: "soft", suggestions },
         { status: 422 }
       );
     }

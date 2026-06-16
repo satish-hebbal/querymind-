@@ -190,7 +190,9 @@ function ErrorCard({ message, onSuggestionClick }: { message: ChatMessage; onSug
         <span>{message.error}</span>
       </div>
       {message.suggestions && message.suggestions.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="space-y-2 pt-1">
+          <p className="text-xs text-ink-dim">Try one of these instead:</p>
+          <div className="flex flex-wrap gap-2">
           {message.suggestions.map((suggestion) => (
             <button
               key={suggestion}
@@ -201,6 +203,7 @@ function ErrorCard({ message, onSuggestionClick }: { message: ChatMessage; onSug
               {suggestion}
             </button>
           ))}
+          </div>
         </div>
       )}
       {message.errorSql && <SqlViewer sql={message.errorSql} />}
