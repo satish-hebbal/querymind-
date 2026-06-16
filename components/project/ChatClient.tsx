@@ -4,7 +4,7 @@ import { History, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import ChatInput from "@/components/ChatInput";
 import ChatWindow from "@/components/ChatWindow";
-import type { ChatHistoryItem, ChatMessage, QueryApiError, QueryApiResponse } from "@/types";
+import type { ChatHistoryItem, ChatMessage, ChatRole, QueryApiError, QueryApiResponse } from "@/types";
 
 function createId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -15,12 +15,24 @@ interface ChatClientProps {
   initialHistory: ChatHistoryItem[];
 }
 
+function historyToMessages(items: ChatHistoryItem[]): ChatMessage[] {
+  return [...items].reverse().flatMap((item) => {
+    const timestamp = new Date(item.created_at).getTime();
+    return [
+      { id: `${item.id}-q`, role: "user" as ChatRole, content: item.question, timestamp },
+      { id: `${item.id}-a`, role: "assistant" as ChatRole, content: "", result: item.result_json ?? undefined, timestamp },
+    ];
+  });
+}
+
 export default function ChatClient({ projectId, initialHistory }: ChatClientProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => historyToMessages(initialHistory.slice(0, 5)));
   const [history, setHistory] = useState<ChatHistoryItem[]>(initialHistory);
   const [isLoading, setIsLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [prefill, setPrefill] = useState("");
+  const [smartQuestions, setSmartQuestions] = useState<string[]>([]);
+  const [smartQuestionsLoading, setSmartQuestionsLoading] = useState(false);
 
   useEffect(() => {
     const pending = window.sessionStorage.getItem("datagini:pending-question");
@@ -29,6 +41,18 @@ export default function ChatClient({ projectId, initialHistory }: ChatClientProp
       setPrefill(pending);
     }
   }, []);
+
+  useEffect(() => {
+    if (initialHistory.length > 0) return;
+    setSmartQuestionsLoading(true);
+    fetch(`/api/projects/${projectId}/initial-questions`)
+      .then((r) => r.json())
+      .then((data: { questions?: string[] }) => {
+        if (data.questions && data.questions.length > 0) setSmartQuestions(data.questions);
+      })
+      .catch(() => {})
+      .finally(() => setSmartQuestionsLoading(false));
+  }, [projectId, initialHistory.length]);
 
   const handleSubmit = useCallback(
     async (question: string) => {
@@ -172,7 +196,7 @@ export default function ChatClient({ projectId, initialHistory }: ChatClientProp
           </button>
         </div>
 
-        <ChatWindow messages={messages} onExampleClick={handleSubmit} onSuggestionClick={handleSubmit} />
+        <ChatWindow messages={messages} onExampleClick={handleSubmit} onSuggestionClick={handleSubmit} smartQuestions={smartQuestions} smartQuestionsLoading={smartQuestionsLoading} />
         <ChatInput onSubmit={handleSubmit} disabled={isLoading} prefill={prefill} />
       </div>
     </div>

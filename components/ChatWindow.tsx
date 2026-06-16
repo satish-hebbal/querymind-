@@ -73,9 +73,11 @@ interface ChatWindowProps {
   messages: ChatMessage[];
   onExampleClick: (question: string) => void;
   onSuggestionClick: (question: string) => void;
+  smartQuestions?: string[];
+  smartQuestionsLoading?: boolean;
 }
 
-export default function ChatWindow({ messages, onExampleClick, onSuggestionClick }: ChatWindowProps) {
+export default function ChatWindow({ messages, onExampleClick, onSuggestionClick, smartQuestions, smartQuestionsLoading }: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -83,24 +85,33 @@ export default function ChatWindow({ messages, onExampleClick, onSuggestionClick
   }, [messages]);
 
   if (messages.length === 0) {
+    const questions = smartQuestions && smartQuestions.length > 0 ? smartQuestions : EXAMPLE_QUESTIONS;
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
         <GiniOnDb className="h-32 w-auto" />
         <div>
           <h2 className="text-xl font-semibold text-ink">Ask anything about your database</h2>
-          <p className="mt-1 text-sm text-ink-secondary">Try one of these to get started</p>
+          <p className="mt-1 text-sm text-ink-secondary">
+            {smartQuestionsLoading ? "Gini is reading your schema..." : "Try one of these to get started"}
+          </p>
         </div>
         <div className="flex max-w-2xl flex-wrap items-center justify-center gap-2">
-          {EXAMPLE_QUESTIONS.map((question) => (
-            <button
-              key={question}
-              type="button"
-              onClick={() => onExampleClick(question)}
-              className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-ink-secondary transition-all duration-150 hover:border-border-bright hover:text-ink active:scale-[0.97]"
-            >
-              {question}
-            </button>
-          ))}
+          {smartQuestionsLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-9 w-48 animate-pulse rounded-full bg-elevated" />
+            ))
+          ) : (
+            questions.map((question) => (
+              <button
+                key={question}
+                type="button"
+                onClick={() => onExampleClick(question)}
+                className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-ink-secondary transition-all duration-150 hover:border-border-bright hover:text-ink active:scale-[0.97]"
+              >
+                {question}
+              </button>
+            ))
+          )}
         </div>
       </div>
     );

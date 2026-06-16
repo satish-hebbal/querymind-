@@ -232,6 +232,42 @@ export async function generateSQL(
   return cleanSqlResponse(text);
 }
 
+function buildInitialQuestionsPrompt(schema: string): string {
+  return `You are a data analyst helping a business user explore their database.
+
+Given this PostgreSQL schema:
+${schema}
+
+Generate exactly 5 short, specific, natural language questions a business user would genuinely want to ask about this data. Make them interesting and directly relevant to the actual table and column names in the schema above.
+
+Return ONLY a valid JSON array of 5 strings, nothing else.
+Example: ["How many customers signed up last month?", "Which product has the highest sales?"]`;
+}
+
+/** Generates 5 schema-aware starter questions for the empty chat screen. Returns [] on failure. */
+export async function generateInitialQuestions(
+  schema: string,
+  provider: AiProvider,
+  apiKey?: string | null,
+  baseUrl?: string | null,
+  model?: string | null
+): Promise<string[]> {
+  try {
+    const key = resolveApiKey(provider, apiKey);
+    const prompt = buildInitialQuestionsPrompt(schema);
+    const text = await callModel(provider, prompt, key, 300, baseUrl, model);
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) return [];
+    const parsed = JSON.parse(match[0]) as unknown;
+    if (Array.isArray(parsed) && parsed.every((s) => typeof s === "string")) {
+      return (parsed as string[]).slice(0, 5);
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 function buildSuggestionsPrompt(question: string, schema: string): string {
   return `You are a database assistant.
 Given this PostgreSQL schema:
