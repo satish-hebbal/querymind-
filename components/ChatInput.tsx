@@ -81,7 +81,7 @@ export default function ChatInput({ onSubmit, disabled, prefill }: ChatInputProp
 
   return (
     <form onSubmit={handleFormSubmit} className="bg-bg px-4 sm:px-6">
-      <div className="mx-auto max-w-3xl border-t border-border py-3">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-border py-3 px-4 my-3">
         <div className="mb-2 flex items-center justify-between text-[11px] text-ink-dim">
           <Link
             href={`/project/${projectId}/config?tab=database`}
