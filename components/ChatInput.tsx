@@ -80,52 +80,54 @@ export default function ChatInput({ onSubmit, disabled, prefill }: ChatInputProp
   }
 
   return (
-    <form onSubmit={handleFormSubmit} className="border-t border-border bg-bg px-4 py-3 sm:px-6">
-      <div className="mx-auto mb-2 flex max-w-3xl items-center justify-between text-[11px] text-ink-dim">
-        <Link
-          href={`/project/${projectId}/config?tab=database`}
-          className="flex items-center gap-1.5 transition-colors duration-150 hover:text-ink-secondary"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={DB_TYPE_ICONS[dbType]} alt="" className="h-3.5 w-3.5" />
-          {DB_TYPE_LABELS[dbType]}
-        </Link>
-        <Link
-          href={`/project/${projectId}/config?tab=ai`}
-          className="flex items-center gap-1.5 transition-colors duration-150 hover:text-ink-secondary"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={AI_PROVIDER_ICONS[aiProvider]} alt="" className="h-3.5 w-3.5" />
-          {AI_PROVIDER_LABELS[aiProvider]}
-        </Link>
+    <form onSubmit={handleFormSubmit} className="bg-bg px-4 sm:px-6">
+      <div className="mx-auto max-w-3xl border-t border-border py-3">
+        <div className="mb-2 flex items-center justify-between text-[11px] text-ink-dim">
+          <Link
+            href={`/project/${projectId}/config?tab=database`}
+            className="flex items-center gap-1.5 transition-colors duration-150 hover:text-ink-secondary"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={DB_TYPE_ICONS[dbType]} alt="" className="h-3.5 w-3.5" />
+            {DB_TYPE_LABELS[dbType]}
+          </Link>
+          <Link
+            href={`/project/${projectId}/config?tab=ai`}
+            className="flex items-center gap-1.5 transition-colors duration-150 hover:text-ink-secondary"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={AI_PROVIDER_ICONS[aiProvider]} alt="" className="h-3.5 w-3.5" />
+            {AI_PROVIDER_LABELS[aiProvider]}
+          </Link>
+        </div>
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+              handleTyping();
+            }}
+            onKeyDown={handleKeyDown}
+            onInput={handleInput}
+            disabled={disabled}
+            placeholder="Ask your database anything..."
+            rows={1}
+            className="max-h-40 flex-1 resize-none rounded-lg border border-border bg-surface px-4 py-3 text-sm text-ink placeholder-ink-dim transition-all duration-150 focus:border-accent focus:outline-none focus:shadow-glow-sm disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            disabled={disabled || !value.trim()}
+            className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl bg-accent text-bg shadow-accent-inset transition-all duration-150 hover:bg-accent-glow active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Send message"
+          >
+            <Send size={18} strokeWidth={1.5} />
+          </button>
+        </div>
+        <p className="mt-2 text-center text-xs text-ink-dim">
+          Enter to send · Shift+Enter for a new line
+        </p>
       </div>
-      <div className="mx-auto flex max-w-3xl items-end gap-2">
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(event) => {
-            setValue(event.target.value);
-            handleTyping();
-          }}
-          onKeyDown={handleKeyDown}
-          onInput={handleInput}
-          disabled={disabled}
-          placeholder="Ask your database anything..."
-          rows={1}
-          className="max-h-40 flex-1 resize-none rounded-lg border border-border bg-surface px-4 py-3 text-sm text-ink placeholder-ink-dim transition-all duration-150 focus:border-accent focus:outline-none focus:shadow-glow-sm disabled:opacity-50"
-        />
-        <button
-          type="submit"
-          disabled={disabled || !value.trim()}
-          className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl bg-accent text-bg shadow-accent-inset transition-all duration-150 hover:bg-accent-glow active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Send message"
-        >
-          <Send size={18} strokeWidth={1.5} />
-        </button>
-      </div>
-      <p className="mx-auto mt-2 max-w-3xl text-center text-xs text-ink-dim">
-        Enter to send · Shift+Enter for a new line
-      </p>
     </form>
   );
 }
