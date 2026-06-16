@@ -138,7 +138,7 @@ function MessageBubble({ message, onSuggestionClick }: { message: ChatMessage; o
         <GiniMascot typing={message.isLoading} size={28} />
       </div>
       <div className="flex min-w-0 max-w-[95%] flex-col sm:max-w-[85%]">
-        <div className="w-full rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-3">
+        <div className={message.isLoading ? "py-1" : "w-full rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-3"}>
           {message.isLoading && <LoadingIndicator />}
           {!message.isLoading && message.error && <ErrorCard message={message} onSuggestionClick={onSuggestionClick} />}
           {!message.isLoading && message.result && <ResultDisplay result={message.result} />}
