@@ -47,8 +47,18 @@ export function validateConnectionString(connectionString: string): string | nul
   return null;
 }
 
-/** Turns a connection/query error into a clear, plain-language message. */
-export function describeDbError(error: unknown): string {
+const SUPABASE_POOLER_HINT =
+  "Looks like a Supabase direct connection (db.xxx.supabase.co) — these use IPv6 and can't be reached from most cloud servers. " +
+  "Fix: in your Supabase project click Connect (top right) → switch to the Transaction pooler tab → copy that URL → " +
+  "paste it in Config → Database and save.";
+
+function isSupabaseDirectUrl(connectionString: string): boolean {
+  return /\bdb\.[a-z0-9]+\.supabase\.co\b/i.test(connectionString);
+}
+
+/** Turns a connection/query error into a clear, plain-language message.
+ *  Pass `connectionString` for smarter, provider-specific hints. */
+export function describeDbError(error: unknown, connectionString?: string): string {
   if (!(error instanceof Error)) {
     return "Something unexpected went wrong while talking to your database.";
   }
@@ -60,11 +70,16 @@ export function describeDbError(error: unknown): string {
 
   for (const candidate of candidates) {
     if (candidate.code && ERROR_MESSAGES[candidate.code]) {
+      if ((candidate.code === "ENOTFOUND" || candidate.code === "ETIMEDOUT" || candidate.code === "ENETUNREACH") &&
+          connectionString && isSupabaseDirectUrl(connectionString)) {
+        return SUPABASE_POOLER_HINT;
+      }
       return ERROR_MESSAGES[candidate.code];
     }
   }
 
   if (candidates.some((candidate) => candidate.message.toLowerCase().includes("timeout"))) {
+    if (connectionString && isSupabaseDirectUrl(connectionString)) return SUPABASE_POOLER_HINT;
     return ERROR_MESSAGES.ETIMEDOUT;
   }
 

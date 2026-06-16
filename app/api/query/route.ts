@@ -48,9 +48,10 @@ export async function POST(req: NextRequest) {
   }
 
   let sql = "";
+  let dbUrl = "";
 
   try {
-    const dbUrl = decrypt(project.db_url as string);
+    dbUrl = decrypt(project.db_url as string);
     const aiProvider = project.ai_provider as AiProvider;
     const aiApiKey = project.ai_api_key ? decrypt(project.ai_api_key as string) : null;
     const aiBaseUrl = project.ai_base_url as string | null;
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
     console.error("Query API error:", error);
 
     return NextResponse.json<QueryApiError>(
-      { error: `Couldn't run that query: ${describeDbError(error)}`, sql: sql || undefined, errorKind: "hard" },
+      { error: `Couldn't run that query: ${describeDbError(error, dbUrl)}`, sql: sql || undefined, errorKind: "hard" },
       { status: 500 }
     );
   }

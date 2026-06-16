@@ -24,8 +24,9 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Project not found." }, { status: 404 });
   }
 
+  let dbUrl = "";
   try {
-    const dbUrl = decrypt(data.db_url as string);
+    dbUrl = decrypt(data.db_url as string);
 
     const formatError = validateConnectionString(dbUrl);
     if (formatError) {
@@ -35,6 +36,6 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     const schema = await getProjectSchemaStructured(params.projectId, dbUrl);
     return NextResponse.json(schema);
   } catch (err) {
-    return NextResponse.json({ error: `Couldn't load the schema: ${describeDbError(err)}` }, { status: 500 });
+    return NextResponse.json({ error: `Couldn't load the schema: ${describeDbError(err, dbUrl)}` }, { status: 500 });
   }
 }

@@ -93,7 +93,7 @@ export async function testConnection(connectionString: string): Promise<TestConn
       client.release();
     }
   } catch (error) {
-    return { success: false, error: describeDbError(error) };
+    return { success: false, error: describeDbError(error, connectionString) };
   } finally {
     await pool.end().catch(() => undefined);
   }

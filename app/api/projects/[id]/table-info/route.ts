@@ -33,8 +33,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Project not found." }, { status: 404 });
   }
 
+  let dbUrl = "";
   try {
-    const dbUrl = decrypt(data.db_url as string);
+    dbUrl = decrypt(data.db_url as string);
 
     const formatError = validateConnectionString(dbUrl);
     if (formatError) {
@@ -54,6 +55,6 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(info);
   } catch (err) {
-    return NextResponse.json({ error: `Couldn't load table info: ${describeDbError(err)}` }, { status: 500 });
+    return NextResponse.json({ error: `Couldn't load table info: ${describeDbError(err, dbUrl)}` }, { status: 500 });
   }
 }
