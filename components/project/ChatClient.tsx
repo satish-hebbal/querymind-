@@ -31,9 +31,6 @@ export default function ChatClient({ projectId, initialHistory }: ChatClientProp
   const [isLoading, setIsLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [prefill, setPrefill] = useState("");
-  const [smartQuestions, setSmartQuestions] = useState<string[]>([]);
-  const [smartQuestionsLoading, setSmartQuestionsLoading] = useState(false);
-
   useEffect(() => {
     const pending = window.sessionStorage.getItem("datagini:pending-question");
     if (pending) {
@@ -41,18 +38,6 @@ export default function ChatClient({ projectId, initialHistory }: ChatClientProp
       setPrefill(pending);
     }
   }, []);
-
-  useEffect(() => {
-    if (initialHistory.length > 0) return;
-    setSmartQuestionsLoading(true);
-    fetch(`/api/projects/${projectId}/initial-questions`)
-      .then((r) => r.json())
-      .then((data: { questions?: string[] }) => {
-        if (data.questions && data.questions.length > 0) setSmartQuestions(data.questions);
-      })
-      .catch(() => {})
-      .finally(() => setSmartQuestionsLoading(false));
-  }, [projectId, initialHistory.length]);
 
   const handleSubmit = useCallback(
     async (question: string) => {
@@ -196,7 +181,7 @@ export default function ChatClient({ projectId, initialHistory }: ChatClientProp
           </button>
         </div>
 
-        <ChatWindow messages={messages} onExampleClick={handleSubmit} onSuggestionClick={handleSubmit} smartQuestions={smartQuestions} smartQuestionsLoading={smartQuestionsLoading} />
+        <ChatWindow messages={messages} onExampleClick={handleSubmit} onSuggestionClick={handleSubmit} />
         <ChatInput onSubmit={handleSubmit} disabled={isLoading} prefill={prefill} />
       </div>
     </div>
