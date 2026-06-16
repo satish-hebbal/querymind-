@@ -232,6 +232,47 @@ export async function generateSQL(
   return cleanSqlResponse(text);
 }
 
+function buildSuggestionsPrompt(question: string, schema: string): string {
+  return `You are a database assistant.
+Given this PostgreSQL schema:
+${schema}
+
+The user asked: "${question}"
+This cannot be answered from the schema above.
+
+Suggest exactly 3 short, specific questions that CAN be answered from this schema.
+Return ONLY a valid JSON array of 3 strings, nothing else.
+Example: ["How many rows are in orders?", "What is the total revenue?", "List all customers"]`;
+}
+
+/**
+ * Generates 3 alternative questions the user can ask, based on their original
+ * unanswerable question and the schema. Returns [] if generation fails.
+ */
+export async function generateSuggestions(
+  question: string,
+  schema: string,
+  provider: AiProvider,
+  apiKey?: string | null,
+  baseUrl?: string | null,
+  model?: string | null
+): Promise<string[]> {
+  try {
+    const key = resolveApiKey(provider, apiKey);
+    const prompt = buildSuggestionsPrompt(question, schema);
+    const text = await callModel(provider, prompt, key, 200, baseUrl, model);
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) return [];
+    const parsed = JSON.parse(match[0]) as unknown;
+    if (Array.isArray(parsed) && parsed.every((s) => typeof s === "string")) {
+      return (parsed as string[]).slice(0, 3);
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Generates a single plain-language sentence answering the question from
  * the query results, so the user gets a direct answer alongside the table/chart.

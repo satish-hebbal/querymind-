@@ -72,9 +72,10 @@ function highlightSql(sql: string): ReactNode[] {
 interface ChatWindowProps {
   messages: ChatMessage[];
   onExampleClick: (question: string) => void;
+  onSuggestionClick: (question: string) => void;
 }
 
-export default function ChatWindow({ messages, onExampleClick }: ChatWindowProps) {
+export default function ChatWindow({ messages, onExampleClick, onSuggestionClick }: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,7 +110,7 @@ export default function ChatWindow({ messages, onExampleClick }: ChatWindowProps
     <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
       <div className="mx-auto flex max-w-3xl flex-col gap-4">
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble key={message.id} message={message} onSuggestionClick={onSuggestionClick} />
         ))}
         <div ref={bottomRef} />
       </div>
@@ -117,7 +118,7 @@ export default function ChatWindow({ messages, onExampleClick }: ChatWindowProps
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function MessageBubble({ message, onSuggestionClick }: { message: ChatMessage; onSuggestionClick: (q: string) => void }) {
   const time = formatTime(message.timestamp);
 
   if (message.role === "user") {
@@ -139,7 +140,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       <div className="flex min-w-0 max-w-[95%] flex-col sm:max-w-[85%]">
         <div className="w-full rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-3">
           {message.isLoading && <LoadingIndicator />}
-          {!message.isLoading && message.error && <ErrorCard message={message} />}
+          {!message.isLoading && message.error && <ErrorCard message={message} onSuggestionClick={onSuggestionClick} />}
           {!message.isLoading && message.result && <ResultDisplay result={message.result} />}
         </div>
         <span className="mt-1 pl-1 text-[11px] text-ink-dim">{time}</span>
@@ -171,7 +172,7 @@ function LoadingIndicator() {
   );
 }
 
-function ErrorCard({ message }: { message: ChatMessage }) {
+function ErrorCard({ message, onSuggestionClick }: { message: ChatMessage; onSuggestionClick: (q: string) => void }) {
   const isSoft = message.errorKind === "soft";
 
   return (
@@ -188,6 +189,20 @@ function ErrorCard({ message }: { message: ChatMessage }) {
         )}
         <span>{message.error}</span>
       </div>
+      {message.suggestions && message.suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {message.suggestions.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => onSuggestionClick(suggestion)}
+              className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-ink-secondary transition-all duration-150 hover:border-border-bright hover:text-ink active:scale-[0.97]"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
       {message.errorSql && <SqlViewer sql={message.errorSql} />}
     </div>
   );

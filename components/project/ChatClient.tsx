@@ -72,6 +72,7 @@ export default function ChatClient({ projectId, initialHistory }: ChatClientProp
                 error: errorData.error ?? "Something went wrong.",
                 errorSql: errorData.sql,
                 errorKind: errorData.errorKind ?? "hard",
+                suggestions: errorData.suggestions,
               };
             }
 
@@ -171,7 +172,7 @@ export default function ChatClient({ projectId, initialHistory }: ChatClientProp
           </button>
         </div>
 
-        <ChatWindow messages={messages} onExampleClick={handleSubmit} />
+        <ChatWindow messages={messages} onExampleClick={handleSubmit} onSuggestionClick={handleSubmit} />
         <ChatInput onSubmit={handleSubmit} disabled={isLoading} prefill={prefill} />
       </div>
     </div>

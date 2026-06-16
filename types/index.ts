@@ -26,6 +26,7 @@ export interface QueryApiError {
   error: string;
   sql?: string;
   errorKind?: ErrorKind;
+  suggestions?: string[];
 }
 
 export type ChatRole = "user" | "assistant";
@@ -38,6 +39,7 @@ export interface ChatMessage {
   error?: string;
   errorSql?: string;
   errorKind?: ErrorKind;
+  suggestions?: string[];
   isLoading?: boolean;
   timestamp: number;
 }

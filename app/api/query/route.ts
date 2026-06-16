@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CANNOT_ANSWER, generateSQL, generateSummary, validateSql } from "@/lib/ai";
+import { CANNOT_ANSWER, generateSQL, generateSuggestions, generateSummary, validateSql } from "@/lib/ai";
 import { describeAiError, describeDbError, validateConnectionString } from "@/lib/db-errors";
 import { decrypt } from "@/lib/encrypt";
 import { queryProjectDb } from "@/lib/project-db";
@@ -77,8 +77,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (sql.trim().toUpperCase() === CANNOT_ANSWER) {
+      const suggestions = await generateSuggestions(question, schema, aiProvider, aiApiKey, aiBaseUrl, aiModel);
       return NextResponse.json<QueryApiError>(
-        { error: "That can't be answered from the available data. Try rephrasing your question.", errorKind: "soft" },
+        { error: "That can't be answered from the available data. Here are some questions you can ask instead:", errorKind: "soft", suggestions },
         { status: 422 }
       );
     }
