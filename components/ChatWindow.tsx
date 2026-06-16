@@ -9,11 +9,31 @@ import ResultChart, { detectChartKind } from "./ResultChart";
 import ResultTable from "./ResultTable";
 
 const THINKING_PHRASES = [
-  "Thinking...",
-  "Connecting to your database...",
-  "Reading your tables...",
-  "Writing a query...",
-  "Crunching the numbers...",
+  "Asking your database nicely...",
+  "Teaching SQL to speak English...",
+  "Waking up the tables...",
+  "Politely interrogating your database...",
+  "Translating human → robot → SQL...",
+  "Definitely not making this up...",
+  "Convincing the database to cooperate...",
+  "Running SELECT * FROM your_brain...",
+  "Untangling the JOINs...",
+  "Bribing the query optimizer...",
+  "Herding the data into one place...",
+  "Whispering sweet SQL to the server...",
+  "Finding your rows in a haystack...",
+  "Making your data feel seen...",
+  "Arguing with the database (Gini wins)...",
+  "Performing acts of extraordinary SQL-ery...",
+  "Consulting the ancient scrolls of schema...",
+  "Deploying the full might of SELECT...",
+  "Doing the computational equivalent of deep breaths...",
+  "Gini is on it. Probably...",
+  "Summoning the data spirits...",
+  "Just vibing with your tables for a sec...",
+  "Counting rows (there are a suspiciously large number)...",
+  "This is taking longer than expected and Gini is embarrassed...",
+  "Almost there. Or at least that's what Gini keeps saying...",
 ];
 
 function formatTime(timestamp: number): string {
@@ -129,7 +149,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 }
 
 function LoadingIndicator() {
-  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [phraseIndex, setPhraseIndex] = useState(() => Math.floor(Math.random() * THINKING_PHRASES.length));
 
   useEffect(() => {
     const id = setInterval(() => {
