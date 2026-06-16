@@ -49,7 +49,7 @@ export function validateConnectionString(connectionString: string): string | nul
 
 const SUPABASE_POOLER_HINT =
   "Looks like a Supabase direct connection (db.xxx.supabase.co) — these use IPv6 and can't be reached from most cloud servers. " +
-  "Fix: in your Supabase project click Connect (top right) → switch to the Transaction pooler tab → copy that URL → " +
+  "Fix: in your Supabase project click Connect (top right) → open the Session pooler tab (port 5432, NOT Transaction pooler) → copy that URL → replace [YOUR-PASSWORD] with your database password → " +
   "paste it in Config → Database and save.";
 
 function isSupabaseDirectUrl(connectionString: string): boolean {
