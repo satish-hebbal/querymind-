@@ -50,7 +50,7 @@ export type ViewMode = "chart" | "table";
 
 export type DbType = "postgresql" | "mysql" | "sqlite";
 
-export type AiProvider = "gemini" | "openai" | "claude" | "custom";
+export type AiProvider = "nvidia" | "gemini" | "openai" | "claude" | "custom";
 
 export interface Project {
   id: string;

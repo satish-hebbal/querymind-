@@ -51,9 +51,25 @@ export async function POST(req: NextRequest) {
   let dbUrl = "";
 
   try {
-    dbUrl = decrypt(project.db_url as string);
+    try {
+      dbUrl = decrypt(project.db_url as string);
+    } catch {
+      return NextResponse.json<QueryApiError>(
+        { error: "Couldn't decrypt the database connection. Re-enter your connection URL in Config → Database and save.", errorKind: "hard" },
+        { status: 500 }
+      );
+    }
+
     const aiProvider = project.ai_provider as AiProvider;
-    const aiApiKey = project.ai_api_key ? decrypt(project.ai_api_key as string) : null;
+
+    let aiApiKey: string | null = null;
+    if (project.ai_api_key) {
+      try {
+        aiApiKey = decrypt(project.ai_api_key as string);
+      } catch {
+        aiApiKey = null;
+      }
+    }
     const aiBaseUrl = project.ai_base_url as string | null;
     const aiModel = project.ai_model as string | null;
 

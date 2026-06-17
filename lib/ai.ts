@@ -27,6 +27,8 @@ const FORBIDDEN_KEYWORDS = [
   "pg_sleep",
 ];
 
+const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
+const NVIDIA_MODEL = "moonshotai/kimi-k2.6";
 const GEMINI_MODEL = "gemini-2.5-flash";
 const OPENAI_MODEL = "gpt-4o";
 const CLAUDE_MODEL = "claude-3-5-haiku-20241022";
@@ -106,9 +108,13 @@ export function validateSql(sql: string): SqlValidationResult {
   return { valid: true };
 }
 
-/** Resolves the API key to use, falling back to the server's Gemini key for the free tier. */
+/** Resolves the API key to use, falling back to the server's shared key for free-tier providers. */
 function resolveApiKey(provider: AiProvider, apiKey?: string | null): string {
   if (apiKey) return apiKey;
+
+  if (provider === "nvidia" && process.env.NVIDIA_API_KEY) {
+    return process.env.NVIDIA_API_KEY;
+  }
 
   if (provider === "gemini" && process.env.GEMINI_API_KEY) {
     return process.env.GEMINI_API_KEY;
@@ -120,6 +126,19 @@ function resolveApiKey(provider: AiProvider, apiKey?: string | null): string {
   }
 
   throw new Error(`No API key configured for ${provider}. Add one in the project's AI Model settings.`);
+}
+
+async function callNvidia(prompt: string, apiKey: string, maxTokens?: number): Promise<string> {
+  const client = new OpenAI({ apiKey, baseURL: NVIDIA_BASE_URL });
+
+  const completion = await client.chat.completions.create({
+    model: NVIDIA_MODEL,
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.2,
+    max_tokens: maxTokens ?? 16384,
+  });
+
+  return completion.choices[0]?.message?.content ?? "";
 }
 
 async function callGemini(prompt: string, apiKey: string, maxOutputTokens?: number): Promise<string> {
@@ -201,6 +220,8 @@ async function callModel(
   model?: string | null
 ): Promise<string> {
   switch (provider) {
+    case "nvidia":
+      return callNvidia(prompt, apiKey, maxTokens);
     case "gemini":
       return callGemini(prompt, apiKey, maxTokens);
     case "openai":

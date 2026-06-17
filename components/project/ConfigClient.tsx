@@ -24,6 +24,13 @@ import { AI_PROVIDER_ICONS, AI_PROVIDER_LABELS, CUSTOM_PROVIDER_EXAMPLES, DB_TYP
 import type { AiProvider, ProjectConfig } from "@/types";
 
 const AI_PROVIDER_INFO: Record<AiProvider, { label: string; note: string; keyUrl: string; keyUrlLabel: string; requiresKey: boolean }> = {
+  nvidia: {
+    label: AI_PROVIDER_LABELS.nvidia,
+    note: "Uses Moonshot AI's Kimi K2 model via NVIDIA NIM. No API key needed — this provider is available to all users for free.",
+    keyUrl: "",
+    keyUrlLabel: "",
+    requiresKey: false,
+  },
   gemini: {
     label: AI_PROVIDER_LABELS.gemini,
     note: "Uses Google's Gemini 2.5 Flash model. A shared free-tier key is used by default — add your own key for higher rate limits.",
@@ -62,7 +69,7 @@ const GUIDE_STEPS: { title: string; body: string; icon: LucideIcon }[] = [
   },
   {
     title: "2. Choose an AI model",
-    body: "By default, Datagini uses a shared Gemini key so you can start asking questions immediately. For higher limits or a different model, switch providers in the AI Model tab and add your own OpenAI or Claude API key.",
+    body: "By default, Datagini uses a shared NVIDIA key powering Kimi K2 so you can start asking questions immediately. For higher limits or a different model, switch providers in the AI Model tab and add your own API key.",
     icon: Sparkles,
   },
   {
@@ -416,7 +423,9 @@ function ReadOnlyRoleHelper() {
 }
 
 function AiModelTab({ projectId, config }: { projectId: string; config: ProjectConfig }) {
-  const [aiProvider, setAiProvider] = useState<AiProvider>(config.ai_provider);
+  const [aiProvider, setAiProvider] = useState<AiProvider>(
+    config.ai_provider === "gemini" ? "nvidia" : config.ai_provider
+  );
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [hasKey, setHasKey] = useState(config.has_ai_api_key);
@@ -499,17 +508,17 @@ function AiModelTab({ projectId, config }: { projectId: string; config: ProjectC
         <p className="mb-4 text-xs text-ink-dim">Choose which model generates SQL and summaries for this project.</p>
 
         <p className="mb-4 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-ink-dim">
-          Pick a provider below — Gemini, GPT-4o, Claude, or your own OpenAI-compatible endpoint via
+          Pick a provider below — Kimi K2 (via NVIDIA NIM), Gemini, GPT-4o, Claude, or your own OpenAI-compatible endpoint via
           &quot;Custom&quot; (DeepSeek, Qwen, Mistral, OpenRouter, self-hosted Ollama/vLLM, etc.). Use the
-          shared Gemini key to get started, or bring your own API key for higher limits and full control
+          shared Kimi K2 key to get started, or bring your own API key for higher limits and full control
           over your data, with no lock-in. When you ask a question, your database schema (table and column
           names) and the resulting query results are sent to the selected provider to generate SQL and a
           plain-English summary; with your own key or endpoint, that data is sent under your account&apos;s
           agreement with that provider.
         </p>
 
-        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {(["gemini", "openai", "claude", "custom"] as AiProvider[]).map((provider) => (
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {(["nvidia", "gemini", "openai", "claude", "custom"] as AiProvider[]).map((provider) => (
             <button key={provider} type="button" onClick={() => setAiProvider(provider)} className={selectorButtonClass(aiProvider === provider)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={AI_PROVIDER_ICONS[provider]} alt="" className="h-4 w-4 shrink-0" />
@@ -579,45 +588,47 @@ function AiModelTab({ projectId, config }: { projectId: string; config: ProjectC
           </div>
         )}
 
-        <div className="mb-2">
-          <label htmlFor="ai-key" className="mb-1 block text-xs font-medium text-ink-secondary">
-            API key {info.requiresKey ? <span className="text-error">*</span> : <span className="text-ink-dim">(optional)</span>}
-          </label>
-          <div className="relative">
-            <input
-              id="ai-key"
-              type={showKey ? "text" : "password"}
-              value={apiKeyInput}
-              onChange={(event) => setApiKeyInput(event.target.value)}
-              placeholder={hasKey ? "Key is set — enter a new key to replace it" : "sk-..."}
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 pr-10 font-mono text-[13px] text-ink placeholder-ink-dim transition-all duration-150 focus:border-accent focus:outline-none focus:shadow-glow-sm"
-            />
-            <button
-              type="button"
-              onClick={() => setShowKey((value) => !value)}
-              aria-label={showKey ? "Hide API key" : "Show API key"}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-dim transition-colors duration-150 hover:text-ink-secondary"
-            >
-              {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-
-          {hasKey && (
-            <div className="mt-1.5 flex items-center justify-between">
-              <span className="flex items-center gap-1 text-xs text-success">
-                <Check size={12} strokeWidth={1.5} />
-                API key is set
-              </span>
+        {aiProvider !== "nvidia" && (
+          <div className="mb-2">
+            <label htmlFor="ai-key" className="mb-1 block text-xs font-medium text-ink-secondary">
+              API key {info.requiresKey ? <span className="text-error">*</span> : <span className="text-ink-dim">(optional)</span>}
+            </label>
+            <div className="relative">
+              <input
+                id="ai-key"
+                type={showKey ? "text" : "password"}
+                value={apiKeyInput}
+                onChange={(event) => setApiKeyInput(event.target.value)}
+                placeholder={hasKey ? "Key is set — enter a new key to replace it" : "sk-..."}
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2.5 pr-10 font-mono text-[13px] text-ink placeholder-ink-dim transition-all duration-150 focus:border-accent focus:outline-none focus:shadow-glow-sm"
+              />
               <button
                 type="button"
-                onClick={handleRemoveKey}
-                className="text-xs text-ink-dim transition-colors duration-150 hover:text-error"
+                onClick={() => setShowKey((value) => !value)}
+                aria-label={showKey ? "Hide API key" : "Show API key"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-dim transition-colors duration-150 hover:text-ink-secondary"
               >
-                Remove key
+                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-          )}
-        </div>
+
+            {hasKey && (
+              <div className="mt-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1 text-xs text-success">
+                  <Check size={12} strokeWidth={1.5} />
+                  API key is set
+                </span>
+                <button
+                  type="button"
+                  onClick={handleRemoveKey}
+                  className="text-xs text-ink-dim transition-colors duration-150 hover:text-error"
+                >
+                  Remove key
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-4 flex items-center gap-3">
           <button

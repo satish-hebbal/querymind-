@@ -6,7 +6,7 @@ import type { AiProvider, DbType, Project } from "@/types";
 export const dynamic = "force-dynamic";
 
 const DB_TYPES: DbType[] = ["postgresql", "mysql", "sqlite"];
-const AI_PROVIDERS: AiProvider[] = ["gemini", "openai", "claude", "custom"];
+const AI_PROVIDERS: AiProvider[] = ["nvidia", "gemini", "openai", "claude", "custom"];
 
 export async function GET() {
   const supabase = createClient();
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   const aiProvider =
     typeof input.aiProvider === "string" && AI_PROVIDERS.includes(input.aiProvider as AiProvider)
       ? (input.aiProvider as AiProvider)
-      : "gemini";
+      : "nvidia";
   const aiApiKey = typeof input.aiApiKey === "string" ? input.aiApiKey.trim() : "";
   const aiBaseUrl = typeof input.aiBaseUrl === "string" ? input.aiBaseUrl.trim() : "";
   const aiModel = typeof input.aiModel === "string" ? input.aiModel.trim() : "";
@@ -67,6 +67,10 @@ export async function POST(req: NextRequest) {
 
   if ((aiProvider === "openai" || aiProvider === "claude") && !aiApiKey) {
     return NextResponse.json({ error: `An API key is required for ${aiProvider === "openai" ? "GPT-4o" : "Claude"}.` }, { status: 400 });
+  }
+
+  if (aiProvider === "nvidia" && !process.env.NVIDIA_API_KEY) {
+    return NextResponse.json({ error: "NVIDIA_API_KEY is not configured on the server." }, { status: 500 });
   }
 
   if (aiProvider === "custom") {
@@ -88,7 +92,7 @@ export async function POST(req: NextRequest) {
       db_url: encrypt(dbUrl),
       db_type: dbType,
       ai_provider: aiProvider,
-      ai_api_key: aiApiKey ? encrypt(aiApiKey) : null,
+      ai_api_key: aiProvider !== "nvidia" && aiApiKey ? encrypt(aiApiKey) : null,
       ai_base_url: aiProvider === "custom" ? aiBaseUrl : null,
       ai_model: aiProvider === "custom" ? aiModel : null,
     })

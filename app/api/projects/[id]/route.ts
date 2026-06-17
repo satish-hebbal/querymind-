@@ -7,7 +7,7 @@ import type { AiProvider, DbType, ProjectConfig } from "@/types";
 export const dynamic = "force-dynamic";
 
 const DB_TYPES: DbType[] = ["postgresql", "mysql", "sqlite"];
-const AI_PROVIDERS: AiProvider[] = ["gemini", "openai", "claude", "custom"];
+const AI_PROVIDERS: AiProvider[] = ["nvidia", "gemini", "openai", "claude", "custom"];
 
 interface RouteParams {
   params: { id: string };
@@ -92,9 +92,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     updates.db_url = encrypt(input.dbUrl.trim());
   }
 
-  if (typeof input.aiApiKey === "string") {
+  const resolvedProvider = (updates.ai_provider as AiProvider | undefined) ?? undefined;
+  if (resolvedProvider !== "nvidia" && typeof input.aiApiKey === "string") {
     const trimmed = input.aiApiKey.trim();
     updates.ai_api_key = trimmed ? encrypt(trimmed) : null;
+  } else if (resolvedProvider === "nvidia") {
+    updates.ai_api_key = null;
   }
 
   if (typeof input.aiBaseUrl === "string") {

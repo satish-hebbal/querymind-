@@ -18,6 +18,7 @@ const DB_TYPE_LABELS: Record<DbType, string> = {
 };
 
 const AI_PROVIDER_LABELS: Record<AiProvider, string> = {
+  nvidia: "Kimi K2",
   gemini: "Gemini",
   openai: "GPT-4o",
   claude: "Claude",
@@ -217,7 +218,7 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dbUrl, setDbUrl] = useState("");
-  const [aiProvider, setAiProvider] = useState<AiProvider>("gemini");
+  const [aiProvider, setAiProvider] = useState<AiProvider>("nvidia");
   const [aiApiKey, setAiApiKey] = useState("");
   const [aiBaseUrl, setAiBaseUrl] = useState("");
   const [aiModel, setAiModel] = useState("");
@@ -413,7 +414,10 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
 
           <div>
             <label className="mb-1 block text-xs font-medium text-ink-secondary">AI Provider</label>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              <button type="button" onClick={() => setAiProvider("nvidia")} className={providerButtonClass(aiProvider === "nvidia")}>
+                Kimi K2 (free)
+              </button>
               <button type="button" onClick={() => setAiProvider("gemini")} className={providerButtonClass(aiProvider === "gemini")}>
                 Gemini (free)
               </button>

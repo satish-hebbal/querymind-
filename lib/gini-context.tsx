@@ -20,7 +20,7 @@ interface GiniProviderProps {
   aiProvider?: AiProvider;
 }
 
-export function GiniProvider({ children, projectId = "", dbType = "postgresql", aiProvider = "gemini" }: GiniProviderProps) {
+export function GiniProvider({ children, projectId = "", dbType = "postgresql", aiProvider = "nvidia" }: GiniProviderProps) {
   const [isTyping, setIsTyping] = useState(false);
 
   return (
@@ -32,5 +32,5 @@ export function GiniProvider({ children, projectId = "", dbType = "postgresql", 
 
 export function useGini(): GiniContextValue {
   const ctx = useContext(GiniContext);
-  return ctx ?? { isTyping: false, setIsTyping: () => {}, projectId: "", dbType: "postgresql", aiProvider: "gemini" };
+  return ctx ?? { isTyping: false, setIsTyping: () => {}, projectId: "", dbType: "postgresql", aiProvider: "nvidia" };
 }
