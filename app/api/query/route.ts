@@ -4,6 +4,7 @@ import { describeAiError, describeDbError, validateConnectionString } from "@/li
 import { decrypt } from "@/lib/encrypt";
 import { queryProjectDb } from "@/lib/project-db";
 import { getProjectSchema } from "@/lib/schema";
+import { runSqlAgent } from "@/lib/sql-agent";
 import { createClient } from "@/lib/supabase/server";
 import type { AiProvider, QueryApiError, QueryApiResponse, ResultRow } from "@/types";
 
@@ -18,7 +19,6 @@ export async function POST(req: NextRequest) {
   }
 
   let body: unknown;
-
   try {
     body = await req.json();
   } catch {
@@ -32,7 +32,6 @@ export async function POST(req: NextRequest) {
   if (!projectId) {
     return NextResponse.json<QueryApiError>({ error: "A 'projectId' is required." }, { status: 400 });
   }
-
   if (!question) {
     return NextResponse.json<QueryApiError>({ error: "A non-empty 'question' string is required." }, { status: 400 });
   }
@@ -83,6 +82,63 @@ export async function POST(req: NextRequest) {
 
     const schema = await getProjectSchema(projectId, dbUrl);
 
+    // ── Agentic path (Kimi K2 via NVIDIA NIM) ──────────────────────────────
+    if (aiProvider === "nvidia") {
+      const nvidiaKey = aiApiKey ?? process.env.NVIDIA_API_KEY;
+      if (!nvidiaKey) {
+        return NextResponse.json<QueryApiError>(
+          { error: "NVIDIA_API_KEY is not configured on the server.", errorKind: "hard" },
+          { status: 500 }
+        );
+      }
+
+      let agentResult;
+      try {
+        agentResult = await runSqlAgent(question, schema, dbUrl, nvidiaKey);
+      } catch (agentError) {
+        return NextResponse.json<QueryApiError>(
+          { error: `Couldn't run the agent: ${describeAiError(agentError, aiProvider)}`, errorKind: "hard" },
+          { status: 502 }
+        );
+      }
+
+      if (agentResult.cannotAnswer) {
+        const suggestions = await generateSuggestions(question, schema, aiProvider, aiApiKey, aiBaseUrl, aiModel);
+        return NextResponse.json<QueryApiError>(
+          { error: "That can't be answered from the available data.", errorKind: "soft", suggestions },
+          { status: 422 }
+        );
+      }
+
+      const { data: chat } = await supabase
+        .from("chats")
+        .insert({
+          project_id: projectId,
+          user_id: userData.user.id,
+          question,
+          sql_generated: agentResult.sql,
+          result_json: {
+            sql: agentResult.sql,
+            columns: agentResult.columns,
+            rows: agentResult.rows,
+            rowCount: agentResult.rowCount,
+            summary: agentResult.summary,
+          },
+        })
+        .select("id")
+        .single();
+
+      return NextResponse.json<QueryApiResponse>({
+        sql: agentResult.sql,
+        columns: agentResult.columns,
+        rows: agentResult.rows,
+        rowCount: agentResult.rowCount,
+        summary: agentResult.summary,
+        chatId: chat?.id as string | undefined,
+      });
+    }
+
+    // ── Direct path (Gemini / OpenAI / Claude / Custom) ────────────────────
     try {
       sql = await generateSQL(question, schema, aiProvider, aiApiKey, aiBaseUrl, aiModel);
     } catch (aiError) {
