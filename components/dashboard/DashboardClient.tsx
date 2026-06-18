@@ -18,7 +18,7 @@ const DB_TYPE_LABELS: Record<DbType, string> = {
 };
 
 const AI_PROVIDER_LABELS: Record<AiProvider, string> = {
-  nvidia: "Kimi K2",
+  nvidia: "Llama 3.3 70B",
   gemini: "Gemini",
   openai: "GPT-4o",
   claude: "Claude",
@@ -416,7 +416,7 @@ function NewProjectModal({ onClose, onCreated }: NewProjectModalProps) {
             <label className="mb-1 block text-xs font-medium text-ink-secondary">AI Provider</label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
               <button type="button" onClick={() => setAiProvider("nvidia")} className={providerButtonClass(aiProvider === "nvidia")}>
-                Kimi K2 (free)
+                Llama 3.3 70B (free)
               </button>
               <button type="button" onClick={() => setAiProvider("gemini")} className={providerButtonClass(aiProvider === "gemini")}>
                 Gemini (free)

@@ -26,7 +26,7 @@ import type { AiProvider, ProjectConfig } from "@/types";
 const AI_PROVIDER_INFO: Record<AiProvider, { label: string; note: string; keyUrl: string; keyUrlLabel: string; requiresKey: boolean }> = {
   nvidia: {
     label: AI_PROVIDER_LABELS.nvidia,
-    note: "Uses Moonshot AI's Kimi K2 model via NVIDIA NIM. No API key needed — this provider is available to all users for free.",
+    note: "Uses Meta's Llama 3.3 70B model via NVIDIA NIM. No API key needed — this provider is available to all users for free.",
     keyUrl: "",
     keyUrlLabel: "",
     requiresKey: false,
@@ -69,7 +69,7 @@ const GUIDE_STEPS: { title: string; body: string; icon: LucideIcon }[] = [
   },
   {
     title: "2. Choose an AI model",
-    body: "By default, Datagini uses a shared NVIDIA key powering Kimi K2 so you can start asking questions immediately. For higher limits or a different model, switch providers in the AI Model tab and add your own API key.",
+    body: "By default, Datagini uses a shared NVIDIA key powering Llama 3.3 70B so you can start asking questions immediately. For higher limits or a different model, switch providers in the AI Model tab and add your own API key.",
     icon: Sparkles,
   },
   {
@@ -423,6 +423,7 @@ function ReadOnlyRoleHelper() {
 }
 
 function AiModelTab({ projectId, config }: { projectId: string; config: ProjectConfig }) {
+  const router = useRouter();
   const [aiProvider, setAiProvider] = useState<AiProvider>(
     config.ai_provider === "gemini" ? "nvidia" : config.ai_provider
   );
@@ -456,6 +457,9 @@ function AiModelTab({ projectId, config }: { projectId: string; config: ProjectC
       }
 
       setSaveState("success");
+      // Refetch the server layout so GiniContext (provider badge + chat path)
+      // updates immediately, without needing a manual page refresh.
+      router.refresh();
       return true;
     } catch (error) {
       setSaveState("error");
@@ -508,9 +512,9 @@ function AiModelTab({ projectId, config }: { projectId: string; config: ProjectC
         <p className="mb-4 text-xs text-ink-dim">Choose which model generates SQL and summaries for this project.</p>
 
         <p className="mb-4 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-ink-dim">
-          Pick a provider below — Kimi K2 (via NVIDIA NIM), Gemini, GPT-4o, Claude, or your own OpenAI-compatible endpoint via
+          Pick a provider below — Llama 3.3 70B (via NVIDIA NIM), Gemini, GPT-4o, Claude, or your own OpenAI-compatible endpoint via
           &quot;Custom&quot; (DeepSeek, Qwen, Mistral, OpenRouter, self-hosted Ollama/vLLM, etc.). Use the
-          shared Kimi K2 key to get started, or bring your own API key for higher limits and full control
+          shared Llama 3.3 70B key to get started, or bring your own API key for higher limits and full control
           over your data, with no lock-in. When you ask a question, your database schema (table and column
           names) and the resulting query results are sent to the selected provider to generate SQL and a
           plain-English summary; with your own key or endpoint, that data is sent under your account&apos;s

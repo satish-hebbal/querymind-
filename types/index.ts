@@ -8,6 +8,8 @@ export interface QueryResult {
   rows: ResultRow[];
   rowCount: number;
   summary?: string;
+  /** Visualization spec for the generative UI (when available). Loosely typed to avoid a cycle. */
+  spec?: Record<string, unknown> | null;
 }
 
 export interface QueryApiResponse {
@@ -44,7 +46,7 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-export type ChartKind = "line" | "bar" | "bignumber" | "table";
+export type ChartKind = "line" | "area" | "bar" | "bignumber" | "pie" | "scatter" | "heatmap" | "stat_cards" | "table";
 
 export type ViewMode = "chart" | "table";
 
@@ -76,6 +78,17 @@ export interface ChatHistoryItem {
   question: string;
   sql_generated: string | null;
   result_json: QueryResult | null;
+  created_at: string;
+}
+
+export interface ConversationTurn {
+  question: string;
+  summary?: string;
+}
+
+export interface Session {
+  id: string;
+  title: string;
   created_at: string;
 }
 

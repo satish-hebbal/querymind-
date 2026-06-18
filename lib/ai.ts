@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
-import type { AiProvider, ResultRow } from "@/types";
+import type { AiProvider, ConversationTurn, ResultRow } from "@/types";
 
 export const CANNOT_ANSWER = "CANNOT_ANSWER";
 
@@ -28,16 +28,23 @@ const FORBIDDEN_KEYWORDS = [
 ];
 
 const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
-const NVIDIA_MODEL = "moonshotai/kimi-k2.6";
+const NVIDIA_MODEL = "meta/llama-3.3-70b-instruct";
 const GEMINI_MODEL = "gemini-2.5-flash";
 const OPENAI_MODEL = "gpt-4o";
 const CLAUDE_MODEL = "claude-3-5-haiku-20241022";
 
-function buildSqlPrompt(schema: string, question: string): string {
+function buildSqlPrompt(schema: string, question: string, history?: ConversationTurn[]): string {
+  const historyBlock =
+    history && history.length > 0
+      ? `\nPrevious questions in this conversation:\n${history
+          .map((t) => `Q: ${t.question}\nA: ${t.summary ?? "(no summary)"}`)
+          .join("\n")}\n`
+      : "";
+
   return `You are a PostgreSQL expert assistant.
 Given this database schema:
 ${schema}
-
+${historyBlock}
 Convert the question to a valid PostgreSQL SELECT query only.
 Rules:
 1. Return ONLY raw SQL. No explanation, no markdown, no backticks.
@@ -69,7 +76,17 @@ export function cleanSqlResponse(text: string): string {
   sql = sql.trim();
   sql = sql.replace(/;+\s*$/g, "");
 
+  // Strip control characters that are invalid in JSON (keep \t \n \r which are valid SQL whitespace)
+  // eslint-disable-next-line no-control-regex
+  sql = sql.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+
   return sql.trim();
+}
+
+/** Strip control characters that break JSON serialization from any AI-generated string. */
+export function sanitizeText(text: string): string {
+  // eslint-disable-next-line no-control-regex
+  return text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 }
 
 export interface SqlValidationResult {
@@ -244,10 +261,11 @@ export async function generateSQL(
   provider: AiProvider,
   apiKey?: string | null,
   baseUrl?: string | null,
-  model?: string | null
+  model?: string | null,
+  conversationHistory?: ConversationTurn[]
 ): Promise<string> {
   const key = resolveApiKey(provider, apiKey);
-  const prompt = buildSqlPrompt(schema, question);
+  const prompt = buildSqlPrompt(schema, question, conversationHistory);
   const text = await callModel(provider, prompt, key, undefined, baseUrl, model);
 
   return cleanSqlResponse(text);
@@ -291,6 +309,25 @@ export async function generateSuggestions(
     return [];
   } catch {
     return [];
+  }
+}
+
+/** Generates a 4-6 word chat title from the user's first question. */
+export async function generateSessionTitle(
+  question: string,
+  provider: AiProvider,
+  apiKey?: string | null,
+  baseUrl?: string | null,
+  model?: string | null
+): Promise<string> {
+  try {
+    const key = resolveApiKey(provider, apiKey);
+    const prompt = `Summarize this database question as a chat title in 4-6 words. Return ONLY the title text, no punctuation at the end, no quotes.\n\nQuestion: ${question}`;
+    const text = await callModel(provider, prompt, key, 30, baseUrl, model);
+    const title = text.trim().replace(/^["']|["']$/g, "").trim();
+    return title || question.slice(0, 50);
+  } catch {
+    return question.slice(0, 50);
   }
 }
 

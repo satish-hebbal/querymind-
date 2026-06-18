@@ -88,7 +88,7 @@ export function describeDbError(error: unknown, connectionString?: string): stri
 }
 
 const AI_PROVIDER_LABELS: Record<AiProvider, string> = {
-  nvidia: "Kimi K2",
+  nvidia: "Llama 3.3 70B",
   gemini: "Gemini",
   openai: "OpenAI",
   claude: "Claude",
@@ -130,7 +130,7 @@ export function describeAiError(error: unknown, provider: AiProvider): string {
   if (/401|invalid.*api.?key|api.?key.*invalid|unauthorized|authentication/i.test(message)) {
     return provider === "custom"
       ? "The custom endpoint rejected your API key. Check the key, base URL, and model name in Config → AI Model."
-      : `Your ${label} API key was rejected. Check it in Config → AI Model, or switch to Kimi K2 for a free shared key with no setup required.`;
+      : `Your ${label} API key was rejected. Check it in Config → AI Model, or switch to Llama 3.3 70B for a free shared key with no setup required.`;
   }
 
   if (/timeout|timed out|network|ECONNREFUSED|ENOTFOUND/i.test(message)) {

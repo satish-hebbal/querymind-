@@ -13,7 +13,7 @@ export const DB_TYPE_ICONS: Record<DbType, string> = {
 };
 
 export const AI_PROVIDER_LABELS: Record<AiProvider, string> = {
-  nvidia: "Kimi K2",
+  nvidia: "Llama 3.3 70B",
   gemini: "Gemini",
   openai: "GPT-4o",
   claude: "Claude",
@@ -21,7 +21,7 @@ export const AI_PROVIDER_LABELS: Record<AiProvider, string> = {
 };
 
 export const AI_PROVIDER_ICONS: Record<AiProvider, string> = {
-  nvidia: "/model-icons/kimi-ai-icon.svg",
+  nvidia: "/model-icons/meta-llama-icon.svg",
   gemini: "/model-icons/gemini-icon.svg",
   openai: "/model-icons/openai-icon.svg",
   claude: "/model-icons/claude-icon.svg",
