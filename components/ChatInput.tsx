@@ -100,7 +100,7 @@ export default function ChatInput({ onSubmit, disabled, prefill }: ChatInputProp
 
   return (
     <form onSubmit={handleFormSubmit} className="bg-bg px-4 pb-0 sm:px-8 lg:px-12">
-      <div className="w-full rounded-t-2xl border border-b-0 border-border px-4 pt-3 pb-2">
+      <div className="mx-auto w-full max-w-4xl rounded-t-2xl border border-b-0 border-border px-4 pt-3 pb-2">
         <textarea
           ref={textareaRef}
           value={value}
