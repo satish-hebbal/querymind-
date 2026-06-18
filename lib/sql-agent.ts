@@ -1,12 +1,12 @@
 import OpenAI from "openai";
-import { Agent, run, tool, setDefaultOpenAIClient, setOpenAIAPI } from "@openai/agents";
+import { Agent, run, tool, setDefaultOpenAIClient, setOpenAIAPI, setTracingDisabled } from "@openai/agents";
 import { z } from "zod";
-import { cleanSqlResponse, validateSql, CANNOT_ANSWER } from "./ai";
+import { cleanSqlResponse, validateSql, CANNOT_ANSWER, generateSummary, sanitizeText } from "./ai";
 import { queryProjectDb } from "./project-db";
-import type { ResultRow } from "@/types";
+import type { ConversationTurn, ResultRow } from "@/types";
 
 const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
-const NVIDIA_MODEL = "moonshotai/kimi-k2.6";
+const NVIDIA_MODEL = "meta/llama-3.3-70b-instruct";
 
 export interface AgentQueryResult {
   sql: string;
@@ -21,11 +21,13 @@ export async function runSqlAgent(
   question: string,
   schema: string,
   dbUrl: string,
-  apiKey: string
+  apiKey: string,
+  conversationHistory?: ConversationTurn[]
 ): Promise<AgentQueryResult> {
   const client = new OpenAI({ apiKey, baseURL: NVIDIA_BASE_URL });
   setDefaultOpenAIClient(client);
   setOpenAIAPI("chat_completions");
+  setTracingDisabled(true);
 
   let capturedSql = "";
   let capturedColumns: string[] = [];
@@ -66,6 +68,13 @@ export async function runSqlAgent(
     },
   });
 
+  const historyBlock =
+    conversationHistory && conversationHistory.length > 0
+      ? `\nPrevious questions in this conversation:\n${conversationHistory
+          .map((t) => `Q: ${t.question}\nA: ${t.summary ?? "(no summary)"}`)
+          .join("\n")}\n`
+      : "";
+
   const agent = new Agent({
     name: "sql_analyst",
     model: NVIDIA_MODEL,
@@ -73,7 +82,7 @@ export async function runSqlAgent(
 
 Database schema:
 ${schema}
-
+${historyBlock}
 Rules:
 1. Use the run_sql tool to query the database and answer the user's question.
 2. Only SELECT statements are allowed — no writes of any kind.
@@ -82,19 +91,43 @@ Rules:
     tools: [runSqlTool],
   });
 
-  const result = await run(agent, question, { maxTurns: 6 });
-  const summary = result.finalOutput?.trim() ?? "";
+  // Run with a 40s timeout — if Kimi K2 hangs, we don't block forever
+  const result = await Promise.race([
+    run(agent, question, { maxTurns: 6 }),
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Agent timeout")), 40000)),
+  ]);
+  let summary = result.finalOutput?.trim() ?? "";
+
+  // Kimi K2 often ignores "one concise sentence" and dumps a long, markdown-y
+  // wall of text, or leaks tool-call special tokens. In any of those cases,
+  // regenerate a clean single-sentence summary from the captured data.
+  const isGarbled =
+    !summary ||
+    summary.includes("<|") ||
+    summary.includes("|tool_call") ||
+    summary.includes("|>") ||
+    summary.includes("```") ||
+    summary.length > 360 ||
+    (summary.match(/\n/g)?.length ?? 0) >= 2 ||
+    /(^|\n)\s*[-*•]\s/.test(summary);
+  if (isGarbled && capturedSql) {
+    try {
+      summary = await generateSummary(question, capturedColumns, capturedRows, capturedRowCount, "nvidia", apiKey);
+    } catch {
+      summary = `Query returned ${capturedRowCount} row${capturedRowCount !== 1 ? "s" : ""}.`;
+    }
+  }
 
   if (!capturedSql || summary === CANNOT_ANSWER) {
     return { sql: "", columns: [], rows: [], rowCount: 0, summary, cannotAnswer: true };
   }
 
   return {
-    sql: capturedSql,
+    sql: sanitizeText(capturedSql),
     columns: capturedColumns,
     rows: capturedRows,
     rowCount: capturedRowCount,
-    summary,
+    summary: sanitizeText(summary),
     cannotAnswer: false,
   };
 }

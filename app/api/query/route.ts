@@ -6,7 +6,7 @@ import { queryProjectDb } from "@/lib/project-db";
 import { getProjectSchema } from "@/lib/schema";
 import { runSqlAgent } from "@/lib/sql-agent";
 import { createClient } from "@/lib/supabase/server";
-import type { AiProvider, QueryApiError, QueryApiResponse, ResultRow } from "@/types";
+import type { AiProvider, ConversationTurn, QueryApiError, QueryApiResponse, ResultRow } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,11 @@ export async function POST(req: NextRequest) {
   const input = body as Record<string, unknown>;
   const projectId = typeof input.projectId === "string" ? input.projectId : "";
   const question = typeof input.question === "string" ? input.question.trim() : "";
+  const sessionId = typeof input.sessionId === "string" ? input.sessionId : null;
+  const rawHistory = Array.isArray(input.conversationHistory) ? input.conversationHistory : [];
+  const conversationHistory: ConversationTurn[] = (rawHistory as ConversationTurn[])
+    .filter((t) => typeof t.question === "string")
+    .slice(0, 6);
 
   if (!projectId) {
     return NextResponse.json<QueryApiError>({ error: "A 'projectId' is required." }, { status: 400 });
@@ -94,7 +99,7 @@ export async function POST(req: NextRequest) {
 
       let agentResult;
       try {
-        agentResult = await runSqlAgent(question, schema, dbUrl, nvidiaKey);
+        agentResult = await runSqlAgent(question, schema, dbUrl, nvidiaKey, conversationHistory);
       } catch (agentError) {
         return NextResponse.json<QueryApiError>(
           { error: `Couldn't run the agent: ${describeAiError(agentError, aiProvider)}`, errorKind: "hard" },
@@ -115,6 +120,7 @@ export async function POST(req: NextRequest) {
         .insert({
           project_id: projectId,
           user_id: userData.user.id,
+          session_id: sessionId,
           question,
           sql_generated: agentResult.sql,
           result_json: {
@@ -140,7 +146,7 @@ export async function POST(req: NextRequest) {
 
     // ── Direct path (Gemini / OpenAI / Claude / Custom) ────────────────────
     try {
-      sql = await generateSQL(question, schema, aiProvider, aiApiKey, aiBaseUrl, aiModel);
+      sql = await generateSQL(question, schema, aiProvider, aiApiKey, aiBaseUrl, aiModel, conversationHistory);
     } catch (aiError) {
       return NextResponse.json<QueryApiError>(
         { error: `Couldn't generate a query: ${describeAiError(aiError, aiProvider)}`, errorKind: "hard" },
@@ -178,6 +184,7 @@ export async function POST(req: NextRequest) {
       .insert({
         project_id: projectId,
         user_id: userData.user.id,
+        session_id: sessionId,
         question,
         sql_generated: sql,
         result_json: {

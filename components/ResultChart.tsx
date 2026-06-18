@@ -1,20 +1,25 @@
 "use client";
 
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   LabelList,
   Line,
   LineChart,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import type { CellValue, ChartKind, QueryResult, ResultRow } from "@/types";
+import { seriesColors, tint, VIZ_PRIMARY } from "@/lib/viz-colors";
 
-const ACCENT = "#a8a29e";
 const GRID_COLOR = "rgba(168, 162, 158, 0.15)";
 const AXIS_COLOR = "#78716c";
 const TOOLTIP_BG = "#1c1917";
@@ -76,6 +81,13 @@ function isDateColumn(column: string, rows: ResultRow[]): boolean {
  * - single row, single column -> big number
  * - otherwise -> table
  */
+export type VisualizationConfig = {
+  type: "table" | "bar" | "line" | "area" | "bignumber" | "pie";
+  x_column?: string;
+  y_column?: string;
+  title?: string;
+};
+
 export function detectChartKind(columns: string[], rows: ResultRow[]): ChartKind {
   if (rows.length === 0 || columns.length === 0) return "table";
 
@@ -123,11 +135,13 @@ function formatBigNumber(value: CellValue): string {
 
 interface ResultChartProps {
   result: QueryResult;
+  vizConfig?: VisualizationConfig;
 }
 
-export default function ResultChart({ result }: ResultChartProps) {
+export default function ResultChart({ result, vizConfig }: ResultChartProps) {
   const { columns, rows } = result;
-  const kind = detectChartKind(columns, rows);
+  // Use AI-chosen visualization type if provided, otherwise auto-detect
+  const kind: ChartKind = (vizConfig?.type && vizConfig.type !== "table") ? (vizConfig.type as ChartKind) : detectChartKind(columns, rows);
 
   if (kind === "bignumber") {
     const column = columns[0];
@@ -144,8 +158,8 @@ export default function ResultChart({ result }: ResultChartProps) {
   const numericColumns = columns.filter((column) => isNumericColumn(column, rows));
 
   if (kind === "line") {
-    const dateColumn = columns.find((column) => isDateColumn(column, rows)) as string;
-    const valueColumn = (numericColumns.find((column) => column !== dateColumn) ?? numericColumns[0]) as string;
+    const dateColumn = (vizConfig?.x_column ?? columns.find((column) => isDateColumn(column, rows))) as string;
+    const valueColumn = (vizConfig?.y_column ?? numericColumns.find((column) => column !== dateColumn) ?? numericColumns[0]) as string;
 
     const data = rows.map((row) => ({
       label: formatDateLabel(row[dateColumn]),
@@ -164,16 +178,109 @@ export default function ResultChart({ result }: ResultChartProps) {
               labelStyle={{ color: TOOLTIP_TEXT }}
               itemStyle={{ color: TOOLTIP_ITEM }}
             />
-            <Line type="monotone" dataKey="value" name={valueColumn} stroke={ACCENT} strokeWidth={2} dot={{ r: 3 }} />
+            <Line type="monotone" dataKey="value" name={valueColumn} stroke={VIZ_PRIMARY} strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
     );
   }
 
+  if (kind === "area") {
+    const xCol = (vizConfig?.x_column ?? columns.find((c) => isDateColumn(c, rows)) ?? columns.find((c) => !numericColumns.includes(c)) ?? columns[0]) as string;
+    const valueColumn = (vizConfig?.y_column ?? numericColumns.find((c) => c !== xCol) ?? numericColumns[0]) as string;
+
+    const data = rows.map((row) => ({
+      label: formatDateLabel(row[xCol]),
+      value: toNumber(row[valueColumn]),
+    }));
+
+    return (
+      <div className="h-72 w-full rounded-lg border border-border bg-surface p-4">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
+            <defs>
+              <linearGradient id="vizAreaFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={VIZ_PRIMARY} stopOpacity={0.45} />
+                <stop offset="100%" stopColor={VIZ_PRIMARY} stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
+            <XAxis dataKey="label" stroke={AXIS_COLOR} fontSize={12} tickMargin={8} />
+            <YAxis stroke={AXIS_COLOR} fontSize={12} width={64} />
+            <Tooltip
+              contentStyle={{ backgroundColor: TOOLTIP_BG, border: `1px solid ${TOOLTIP_BORDER}`, borderRadius: 8 }}
+              labelStyle={{ color: TOOLTIP_TEXT }}
+              itemStyle={{ color: TOOLTIP_ITEM }}
+            />
+            <Area type="monotone" dataKey="value" name={valueColumn} stroke={VIZ_PRIMARY} strokeWidth={2} fill="url(#vizAreaFill)" dot={{ r: 2.5 }} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
+  if (kind === "pie") {
+    const labelCol = vizConfig?.x_column ?? columns.find((c) => !numericColumns.includes(c)) ?? columns[0];
+    const valueCol = vizConfig?.y_column ?? numericColumns[0] ?? columns[1];
+
+    const pieData = rows.slice(0, 8).map((row) => ({
+      name: String(row[labelCol] ?? ""),
+      value: toNumber(row[valueCol]),
+    }));
+
+    const total = pieData.reduce((s, d) => s + d.value, 0);
+    const colors = seriesColors(pieData.length);
+
+    return (
+      <div className="w-full rounded-lg border border-border bg-surface p-4">
+        {vizConfig?.title && <p className="mb-3 text-center text-sm font-medium text-ink">{vizConfig.title}</p>}
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+          <div className="h-52 w-full max-w-xs shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="45%"
+                  outerRadius="70%"
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {pieData.map((_, i) => (
+                    <Cell key={i} fill={colors[i]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ backgroundColor: TOOLTIP_BG, border: `1px solid ${TOOLTIP_BORDER}`, borderRadius: 8 }}
+                  labelStyle={{ color: TOOLTIP_TEXT }}
+                  itemStyle={{ color: TOOLTIP_ITEM }}
+                  formatter={(value: number) => [value.toLocaleString("en-IN"), ""]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <ul className="flex flex-1 flex-col gap-1.5 py-1">
+            {pieData.map((item, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 text-sm">
+                <span className="flex items-center gap-2 truncate text-ink-secondary">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: colors[i] }} />
+                  {item.name}
+                </span>
+                <span className="shrink-0 font-medium text-ink">
+                  {total > 0 ? `${((item.value / total) * 100).toFixed(1)}%` : item.value.toLocaleString("en-IN")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
   if (kind === "bar") {
-    const textColumn = columns.find((column) => !numericColumns.includes(column)) as string;
-    const valueColumn = numericColumns[0];
+    const textColumn = vizConfig?.x_column ?? columns.find((column) => !numericColumns.includes(column)) as string;
+    const valueColumn = vizConfig?.y_column ?? numericColumns[0];
 
     const allData = rows.map((row) => ({
       label: String(row[textColumn] ?? ""),
@@ -205,7 +312,14 @@ export default function ResultChart({ result }: ResultChartProps) {
                 labelStyle={{ color: TOOLTIP_TEXT }}
                 itemStyle={{ color: TOOLTIP_ITEM }}
               />
-              <Bar dataKey="value" name={valueColumn} fill={ACCENT} radius={[0, 4, 4, 0]} maxBarSize={28}>
+              <Bar
+                dataKey="value"
+                name={valueColumn}
+                fill={VIZ_PRIMARY}
+                radius={[0, 4, 4, 0]}
+                maxBarSize={26}
+                background={{ fill: tint(VIZ_PRIMARY, 0.1), radius: 4 }}
+              >
                 <LabelList dataKey="value" position="right" fill={AXIS_COLOR} fontSize={11} formatter={formatValueLabel} />
               </Bar>
             </BarChart>
