@@ -1,16 +1,25 @@
 name: Supabase keep-alive
 
-# Prevents the free-tier Supabase project from auto-pausing after 7 days of
-# inactivity by running a real DB query on a schedule (every 3 days).
+# Keeps the free-tier Supabase project from auto-pausing after 7 days idle by
+# running a real DB query on a schedule. It also writes a timestamp file and
+# commits it each run, which counts as repo activity so GitHub never disables
+# this scheduled workflow (GitHub disables cron after 60 days of no activity).
+# Net effect: the project stays alive even if a human never touches the repo.
 on:
   schedule:
     - cron: "0 6 */3 * *" # 06:00 UTC, every 3rd day
   workflow_dispatch: {} # allow manual runs from the Actions tab
 
+permissions:
+  contents: write # needed to push the heartbeat commit
+
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
       - name: Query the database
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -27,3 +36,18 @@ jobs:
             exit 1
           fi
           echo "Keep-alive query succeeded"
+
+      - name: Record heartbeat (keeps the workflow itself from being disabled)
+        run: |
+          set -euo pipefail
+          mkdir -p .github
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/last-keepalive.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/last-keepalive.txt
+          if git diff --cached --quiet; then
+            echo "No change to commit"
+          else
+            git commit -m "chore: keep-alive heartbeat [skip ci]"
+            git push
+          fi
