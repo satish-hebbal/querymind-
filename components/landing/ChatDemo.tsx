@@ -386,6 +386,8 @@ export default function ChatDemo() {
                   className={`h-12 overflow-hidden text-sm text-ink transition-all duration-500 ease-out ${
                     answerVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"
                   }`}
+                  // Wait for the thinking indicator to fade out so the two never overlap.
+                  style={{ transitionDelay: answerVisible ? "300ms" : "0ms" }}
                 >
                   {scenario.answer}
                 </p>

@@ -298,3 +298,213 @@ body {
 .zzz-letter {
   animation: zzz-float 2.4s ease-in-out infinite;
 }
+
+/* ----- Landing motion system ----- */
+
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 700ms var(--ease-out-expo),
+    transform 900ms var(--ease-out-expo);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.hero-glow {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(var(--accent-green) / 0.22), transparent 70%);
+  filter: blur(70px);
+  animation: drift 12s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.mask-radial {
+  mask-image: radial-gradient(ellipse at center, black 25%, transparent 72%);
+}
+
+.mask-fade-x {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.float-y {
+  animation: float-y 6s ease-in-out infinite;
+}
+
+@keyframes word-in {
+  from {
+    opacity: 0;
+    transform: translateY(55%);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.word-in {
+  animation: word-in 650ms var(--ease-out-expo) both;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise-in {
+  animation: rise-in 500ms var(--ease-out-expo) both;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee var(--marquee-duration, 50s) linear infinite;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-counter {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.orbit {
+  animation: orbit var(--orbit-duration, 40s) linear infinite;
+}
+
+.orbit-counter {
+  animation: orbit-counter var(--orbit-duration, 40s) linear infinite;
+}
+
+@keyframes ping-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.ping-ring {
+  animation: ping-ring 1.8s ease-out infinite;
+}
+
+@keyframes progress-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.progress-fill {
+  transform-origin: left;
+  animation: progress-fill var(--progress-duration, 5s) linear forwards;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--bg-elevated)) 0%,
+    rgb(var(--border-bright) / 0.6) 50%,
+    rgb(var(--bg-elevated)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ----- ANSI headline ----- */
+
+@keyframes ansi-block-in {
+  0% {
+    opacity: 0;
+    fill: rgb(var(--accent-green));
+  }
+  35% {
+    opacity: 1;
+    fill: rgb(var(--accent-green));
+  }
+  100% {
+    opacity: 1;
+    fill: rgb(var(--text-primary));
+  }
+}
+
+.ansi-block {
+  animation: ansi-block-in 900ms var(--ease-out-expo) both;
+}
+
+.ansi-shadow {
+  animation: fade-in 900ms ease-out 900ms both;
+}
