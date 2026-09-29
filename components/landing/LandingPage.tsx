@@ -1,6 +1,6 @@
 import { Archive, ArrowRight, Braces, Database, KeyRound, Lock, Sparkles, Wrench } from "lucide-react";
 import localFont from "next/font/local";
-import Link from "next/link";
+import { SignInUnavailableTrigger } from "@/components/SignInUnavailable";
 import type { ReactNode } from "react";
 import { DeprecationNoticeTrigger } from "@/components/DeprecationNotice";
 import GiniMascot from "@/components/GiniMascot";
@@ -114,15 +114,13 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            <Link href="/auth/login" className="hidden text-sm font-medium text-ink-secondary transition hover:text-ink sm:block">
+            <SignInUnavailableTrigger className="hidden text-sm font-medium text-ink-secondary transition hover:text-ink sm:block">
               Sign in
-            </Link>
-            <Link
-              href="/auth/login?mode=signup"
-              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-ink transition hover:border-border-bright sm:px-4"
+            </SignInUnavailableTrigger>
+            <SignInUnavailableTrigger className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-ink transition hover:border-border-bright sm:px-4"
             >
               Get started
-            </Link>
+            </SignInUnavailableTrigger>
           </div>
         </nav>
       </header>
@@ -155,13 +153,11 @@ export default function LandingPage() {
             </p>
 
             <div className="rise-in mt-9 flex flex-col items-center gap-3 sm:flex-row" style={{ animationDelay: "300ms" }}>
-              <Link
-                href="/auth/login?mode=signup"
-                className="group flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-accent-inset transition hover:bg-accent-glow"
+              <SignInUnavailableTrigger className="group flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-accent-inset transition hover:bg-accent-glow"
               >
                 Try it anyway
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-              </Link>
+              </SignInUnavailableTrigger>
               <a
                 href="#how"
                 className="rounded-xl border border-border bg-bg/60 px-6 py-3 text-sm font-semibold text-ink-secondary backdrop-blur transition hover:border-border-bright hover:text-ink"
@@ -305,12 +301,10 @@ export default function LandingPage() {
                   <Archive size={14} strokeWidth={1.75} />
                   Read the full note
                 </DeprecationNoticeTrigger>
-                <Link
-                  href="/auth/login?mode=signup"
-                  className="flex items-center gap-1.5 px-2 py-2 text-sm text-ink-tertiary transition-colors hover:text-ink"
+                <SignInUnavailableTrigger className="flex items-center gap-1.5 px-2 py-2 text-sm text-ink-tertiary transition-colors hover:text-ink"
                 >
                   Or try it anyway <ArrowRight size={14} />
-                </Link>
+                </SignInUnavailableTrigger>
               </div>
             </div>
           </Reveal>

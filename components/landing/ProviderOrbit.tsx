@@ -48,7 +48,7 @@ function Ring({
               <div className="orbit-counter" style={style}>
                 <div
                   title={icon.alt}
-                  className="-ml-5 -mt-5 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card shadow-glow-sm transition-transform duration-300 hover:scale-110 hover:border-border-bright"
+                  className="-ml-5 -mt-5 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card shadow-glow-sm transition-transform duration-300 hover:scale-110 hover:border-border-bright"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={icon.src} alt={icon.alt} className="h-5 w-5" />
@@ -65,10 +65,19 @@ function Ring({
 export default function ProviderOrbit() {
   return (
     <div className="relative mx-auto h-[340px] w-[340px] scale-[0.82] sm:scale-100">
+      {/* Ripples sit behind the rings so they pass under the orbiting icons. */}
+      <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2">
+        {[0, 0.9, 1.8].map((delay) => (
+          <span
+            key={delay}
+            className="ripple-ring absolute inset-0 rounded-full border border-accent/50"
+            style={{ animationDelay: `${delay}s` }}
+          />
+        ))}
+      </div>
       <Ring icons={OUTER} radius={155} duration={60} reverse />
       <Ring icons={INNER} radius={92} duration={40} />
-      <div className="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl border border-border-bright bg-card shadow-glow-lg">
-        <span className="ping-ring absolute inset-0 rounded-2xl border border-accent/40" />
+      <div className="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border-bright bg-card shadow-glow-lg">
         <GiniMascot size={48} />
       </div>
     </div>

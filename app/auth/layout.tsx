@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { OpenSignInUnavailable } from "@/components/SignInUnavailable";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -12,5 +13,10 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
     redirect("/dashboard");
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <OpenSignInUnavailable />
+    </>
+  );
 }
